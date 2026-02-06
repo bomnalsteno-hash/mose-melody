@@ -26,16 +26,18 @@ const CursorTrail: React.FC = () => {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // 로직 좌표계를 CSS 픽셀과 동일하게 맞추고 고해상도만 스케일로 처리
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
     };
 
     resize();
     window.addEventListener('resize', resize);
 
     const handleMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      // 전체 화면 기준 좌표 그대로 사용해서 커서와 정확히 맞춤
+      const x = e.clientX;
+      const y = e.clientY;
 
       const last = lastMousePosRef.current;
       if (last) {
