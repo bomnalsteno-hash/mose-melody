@@ -152,7 +152,42 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       // 4. Draw Particles
       updateAndDrawParticles(ctx, theme);
 
-      // 5. Draw Playhead (Center Line)
+      // 5. Draw current character label above playhead
+      const activeIndex = lastActiveEventIndex.current;
+      if (activeIndex >= 0 && activeIndex < events.length) {
+        const active = events[activeIndex];
+        const charLabel = active.char ?? '';
+        if (charLabel) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          const labelY = trackY - 80;
+          const glowGradient = ctx.createRadialGradient(
+            playheadX,
+            labelY,
+            0,
+            playheadX,
+            labelY,
+            80
+          );
+          glowGradient.addColorStop(0, theme.primaryColor.replace(')', ',0.4)').replace('rgb', 'rgba'));
+          glowGradient.addColorStop(1, 'rgba(15,23,42,0)');
+          ctx.fillStyle = glowGradient;
+          ctx.beginPath();
+          ctx.arc(playheadX, labelY, 80, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = '600 40px "Space Mono", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = theme.primaryColor;
+          ctx.shadowBlur = 25;
+          ctx.fillStyle = '#e5f4ff';
+          ctx.fillText(charLabel, playheadX, labelY);
+          ctx.restore();
+        }
+      }
+
+      // 6. Draw Playhead (Center Line)
       ctx.globalCompositeOperation = 'source-over';
       ctx.shadowBlur = 0; // Reset shadow for line
       

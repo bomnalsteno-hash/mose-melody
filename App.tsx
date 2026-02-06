@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AudioEngine } from './services/audioEngine';
 import Visualizer from './components/Visualizer';
+import CursorTrail from './components/CursorTrail';
 import { ThemeConfig, DEFAULT_THEME, PlaybackEvent } from './types';
 import { Music, Sparkles } from 'lucide-react';
 
@@ -204,12 +205,9 @@ const App: React.FC = () => {
     };
   }, [isPlaying]);
 
-  const highlightIndex = inputText.length
-    ? Math.min(inputText.length - 1, Math.floor(inputText.length * playbackProgress))
-    : 0;
-
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col items-center relative overflow-hidden font-sans text-slate-200">
+      <CursorTrail />
       
       {/* Background Ambience */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -285,33 +283,6 @@ const App: React.FC = () => {
             style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
             disabled={isPlaying}
           />
-
-          {/* Playback text highlight - karaoke style */}
-          {inputText && (
-            <div className="mt-5 flex justify-center">
-              <div className="relative px-5 py-3 rounded-full bg-slate-900/70 border border-white/10 backdrop-blur-xl shadow-[0_0_35px_rgba(56,189,248,0.35)] max-w-full overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 via-purple-500/10 to-pink-500/20 opacity-60 mix-blend-screen pointer-events-none" />
-                <p className="relative text-sm font-mono whitespace-pre-wrap text-center">
-                  <span className="text-slate-500">
-                    {isPlaying ? inputText.slice(0, highlightIndex) : ''}
-                  </span>
-                  {isPlaying && (
-                    <>
-                      <span className="text-sky-300 font-bold drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]">
-                        {inputText[highlightIndex]}
-                      </span>
-                      <span className="inline-block w-[2px] h-4 bg-sky-300/80 align-middle ml-0.5 animate-pulse rounded-full" />
-                    </>
-                  )}
-                  <span className="text-slate-600">
-                    {isPlaying
-                      ? inputText.slice(highlightIndex + 1)
-                      : inputText}
-                  </span>
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Theme Controls */}
