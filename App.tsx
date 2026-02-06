@@ -127,6 +127,12 @@ const App: React.FC = () => {
     };
   };
 
+  // 비제어 입력과 동기화: ref 값을 state에 반영 (프리뷰용)
+  const syncInputToState = () => {
+    const v = inputRef.current?.value ?? '';
+    setInputText(v);
+  };
+
   // Initialize events when text changes (preview mode)
   useEffect(() => {
     const previewText = inputText || 'HELLO';
@@ -149,7 +155,7 @@ const App: React.FC = () => {
       return;
     }
 
-    const text = inputText.trim();
+    const text = (inputRef.current?.value ?? inputText).trim();
     if (!text) return;
 
     // 1. 테마 결정 (자동 / 수동)
@@ -214,21 +220,22 @@ const App: React.FC = () => {
   // 공통 컨트롤 컴포넌트 (모바일/데스크톱 공유)
   const ControlsContent = () => (
     <>
-      {/* 텍스트 입력 - 레이아웃 수정 전처럼 넉넉한 높이 (입력 안 되는 현상 방지) */}
+      {/* 텍스트 입력 - 비제어(한글 IME 정상 동작) + blur/compositionEnd에서만 state 동기화 */}
       <div className="relative group">
         <div
-          className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
+          className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
             isPlaying ? 'animate-pulse opacity-60' : ''
           }`}
         ></div>
         <textarea
           ref={inputRef}
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          defaultValue=""
+          onBlur={syncInputToState}
           onCompositionEnd={(e) => setInputText(e.currentTarget.value)}
+          onInput={() => requestAnimationFrame(syncInputToState)}
           placeholder="Write something..."
-          rows={3}
-          className="relative w-full min-h-[4rem] py-3 px-4 rounded-xl bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-base leading-relaxed tracking-wide"
+          rows={2}
+          className="relative w-full h-14 md:h-16 py-2 px-3 rounded-lg bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-sm leading-snug tracking-wide"
           style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
           disabled={isPlaying}
         />
