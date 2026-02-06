@@ -214,26 +214,21 @@ const App: React.FC = () => {
   // 공통 컨트롤 컴포넌트 (모바일/데스크톱 공유)
   const ControlsContent = () => (
     <>
-      {/* 텍스트 입력 - 최소 높이 */}
+      {/* 텍스트 입력 - 레이아웃 수정 전처럼 넉넉한 높이 (입력 안 되는 현상 방지) */}
       <div className="relative group">
         <div
-          className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
+          className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
             isPlaying ? 'animate-pulse opacity-60' : ''
           }`}
         ></div>
         <textarea
           ref={inputRef}
           value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
           onCompositionEnd={(e) => setInputText(e.currentTarget.value)}
-          onChange={(e) => {
-            const el = e.target;
-            requestAnimationFrame(() => {
-              if (el && document.body.contains(el)) setInputText((el as HTMLTextAreaElement).value);
-            });
-          }}
           placeholder="Write something..."
-          rows={1}
-          className="relative w-full h-10 md:h-11 py-2 px-3 rounded-lg bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-sm leading-snug tracking-wide"
+          rows={3}
+          className="relative w-full min-h-[4rem] py-3 px-4 rounded-xl bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-base leading-relaxed tracking-wide"
           style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
           disabled={isPlaying}
         />
