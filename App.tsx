@@ -197,25 +197,29 @@ const App: React.FC = () => {
         
         {/* Status Overlay - Floating Glass */}
         <div className="absolute top-6 left-6 pointer-events-none">
-            <div className={`transition-all duration-700 transform ${isPlaying || isAnalyzing ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-                <div className="backdrop-blur-sm bg-black/40 p-4 rounded-xl border border-white/10 shadow-2xl">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-mono uppercase text-slate-400 tracking-widest">
-                          {isAutoTheme ? 'Auto Mood' : 'Custom Mood'}
-                        </span>
-                        <span
-                          className="text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-                          style={{ color: theme.primaryColor }}
-                        >
-                          {theme.mood}
-                        </span>
-                        <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-2 uppercase tracking-wide">
-                            <span className="bg-white/10 px-2 py-1 rounded">{theme.waveform}</span>
-                            <span className="bg-white/10 px-2 py-1 rounded">{theme.baseFrequency}Hz</span>
-                        </div>
-                    </div>
+          <div
+            className={`transition-all duration-700 transform ${
+              isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+            }`}
+          >
+            <div className="backdrop-blur-sm bg-black/40 p-4 rounded-xl border border-white/10 shadow-2xl">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-mono uppercase text-slate-400 tracking-widest">
+                  {isAutoTheme ? 'Auto Mood' : 'Custom Mood'}
+                </span>
+                <span
+                  className="text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                  style={{ color: theme.primaryColor }}
+                >
+                  {theme.mood}
+                </span>
+                <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-2 uppercase tracking-wide">
+                  <span className="bg-white/10 px-2 py-1 rounded">{theme.waveform}</span>
+                  <span className="bg-white/10 px-2 py-1 rounded">{theme.baseFrequency}Hz</span>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
       </div>
 
@@ -412,12 +416,7 @@ const App: React.FC = () => {
                 }
             `}
           >
-             {isAnalyzing ? (
-                 <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-900"></div>
-                    <span>Composing Symphony...</span>
-                 </>
-             ) : isPlaying ? (
+             {isPlaying ? (
                 <>
                     <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                     <span>Stop Playback</span>
@@ -433,9 +432,9 @@ const App: React.FC = () => {
 
         {/* How it works - Minimal */}
         <div className="mt-4 flex justify-center opacity-60 hover:opacity-100 transition-opacity">
-            <p className="text-center text-xs font-mono text-slate-400 max-w-md leading-loose">
-                AI analyzes the sentiment of your text and composes a unique Morse Code symphony with ambient accompaniment and reactive visuals.
-            </p>
+          <p className="text-center text-xs font-mono text-slate-400 max-w-md leading-loose">
+            Your text is converted into Morse code rhythm and played as a melodic sequence with ambient accompaniment and reactive visuals. No external AI or API is used.
+          </p>
         </div>
 
       </main>
