@@ -209,16 +209,228 @@ const App: React.FC = () => {
     };
   }, [isPlaying]);
 
+  // 공통 컨트롤 컴포넌트 (모바일/데스크톱 공유)
+  const ControlsContent = () => (
+    <>
+      {/* 텍스트 입력 - 최소 높이 */}
+      <div className="relative group">
+        <div
+          className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
+            isPlaying ? 'animate-pulse opacity-60' : ''
+          }`}
+        ></div>
+        <textarea
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Write something..."
+          rows={1}
+          className="relative w-full h-10 md:h-11 py-2 px-3 rounded-lg bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-sm leading-snug tracking-wide"
+          style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
+          disabled={isPlaying}
+        />
+      </div>
+
+      {/* 프리셋 버튼만 (라벨 없음) */}
+      <section className="text-xs font-mono text-slate-300">
+        <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md">
+          <div className="flex flex-wrap gap-1.5 md:gap-2">
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-sky-500/20 border border-sky-400/40 hover:bg-sky-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Dreamy');
+                setSelectedWaveform('triangle');
+                setSelectedScale('dreamy');
+                setSelectedTempo(0.9);
+                setSelectedBaseFreq(420);
+                setIsAutoTheme(false);
+              }}
+            >
+              Dreamy Night
+            </button>
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Melancholic');
+                setSelectedWaveform('sine');
+                setSelectedScale('minor');
+                setSelectedTempo(0.8);
+                setSelectedBaseFreq(400);
+                setIsAutoTheme(false);
+              }}
+            >
+              Soft Melancholy
+            </button>
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Serene');
+                setSelectedWaveform('sine');
+                setSelectedScale('serene');
+                setSelectedTempo(0.85);
+                setSelectedBaseFreq(440);
+                setIsAutoTheme(false);
+              }}
+            >
+              Serene Morning
+            </button>
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 hover:bg-cyan-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Gentle');
+                setSelectedWaveform('triangle');
+                setSelectedScale('gentle');
+                setSelectedTempo(0.75);
+                setSelectedBaseFreq(380);
+                setIsAutoTheme(false);
+              }}
+            >
+              Gentle Rain
+            </button>
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-rose-500/20 border border-rose-400/40 hover:bg-rose-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Cozy');
+                setSelectedWaveform('sine');
+                setSelectedScale('cozy');
+                setSelectedTempo(0.9);
+                setSelectedBaseFreq(410);
+                setIsAutoTheme(false);
+              }}
+            >
+              Cozy Evening
+            </button>
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Peaceful');
+                setSelectedWaveform('triangle');
+                setSelectedScale('peaceful');
+                setSelectedTempo(0.7);
+                setSelectedBaseFreq(360);
+                setIsAutoTheme(false);
+              }}
+            >
+              Peaceful Night
+            </button>
+            <button
+              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-teal-500/20 border border-teal-400/40 hover:bg-teal-500/30 text-[9px] md:text-[11px]"
+              onClick={() => {
+                setSelectedMood('Tranquil');
+                setSelectedWaveform('sine');
+                setSelectedScale('tranquil');
+                setSelectedTempo(0.82);
+                setSelectedBaseFreq(430);
+                setIsAutoTheme(false);
+              }}
+            >
+              Tranquil Forest
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex justify-center">
+        <button
+          onClick={handlePlay}
+          className={`
+              relative px-6 md:px-10 py-3 md:py-5 rounded-full font-bold text-sm md:text-lg flex items-center gap-2 md:gap-3 transition-all transform hover:scale-105 active:scale-95 border
+              ${isPlaying 
+                  ? 'bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500/20 backdrop-blur-md' 
+                  : 'bg-white text-slate-900 border-white hover:bg-sky-50 shadow-[0_0_30px_rgba(56,189,248,0.4)]'
+              }
+          `}
+        >
+           {isPlaying ? (
+              <>
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  <span>Stop</span>
+              </>
+           ) : (
+              <>
+                  <Music className="w-4 md:w-5 h-4 md:h-5" />
+                  <span>Generate Music</span>
+              </>
+           )}
+        </button>
+      </div>
+
+      {/* How it works - Minimal */}
+      <div className="mt-2 md:mt-4 flex justify-center opacity-60 hover:opacity-100 transition-opacity">
+        <p className="text-center text-[10px] md:text-xs font-mono text-slate-400 max-w-md leading-relaxed md:leading-loose px-2">
+          Your text is converted into Morse code rhythm and played as a melodic sequence with ambient accompaniment and reactive visuals. No external AI or API is used.
+        </p>
+      </div>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-[#0f172a] flex flex-col relative overflow-hidden font-sans text-slate-200">
+    <div className="min-h-screen bg-[#0f172a] flex flex-col relative font-sans text-slate-200">
       {/* Background Ambience */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
           <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/20 blur-[100px]"></div>
           <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-900/20 blur-[100px]"></div>
       </div>
 
-      {/* Visualizer Area - Full screen */}
-      <div className="fixed inset-0 w-full h-full z-0">
+      {/* 좁은 뷰포트(모바일·창 축소): h-[100dvh] + flex, 비주얼라이저 고정 + 하단 패널 스크롤 */}
+      <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden">
+        {/* Header - flex-none 고정 높이 */}
+        <header className="flex-none w-full p-3 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Sparkles className="text-sky-400 fill-sky-400/20 flex-shrink-0" size={16} />
+            <h1 className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider truncate">
+              MORSE MELODY AI
+            </h1>
+          </div>
+        </header>
+
+        {/* Visualizer - flex-none, h-[40dvh] / min-h-[280px] */}
+        <div className="relative w-full flex-none h-[40dvh] min-h-[280px] z-10">
+          <Visualizer 
+              isPlaying={isPlaying} 
+              events={events} 
+              theme={theme}
+              audioCtxRef={audioCtxRef}
+              startTimeRef={startTimeRef}
+          />
+          
+          {/* Status Overlay - Mobile */}
+          <div className="absolute top-3 left-3 pointer-events-none z-10">
+            <div
+              className={`transition-all duration-700 transform ${
+                isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+              }`}
+            >
+              <div className="backdrop-blur-sm bg-black/40 p-2 rounded-lg border border-white/10 shadow-2xl">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[8px] font-mono uppercase text-slate-400 tracking-widest">
+                    {isAutoTheme ? 'Auto Mood' : 'Custom Mood'}
+                  </span>
+                  <span
+                    className="text-lg font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                    style={{ color: theme.primaryColor }}
+                  >
+                    {theme.mood}
+                  </span>
+                  <div className="flex gap-1 text-[8px] text-slate-400 font-mono mt-1 uppercase tracking-wide">
+                    <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.waveform}</span>
+                    <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.baseFrequency}Hz</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 메인 패널 - flex-1 min-h-0 overflow-y-auto, 스크롤 끝까지 pb 여유 */}
+        <main className="flex-1 min-h-0 w-full overflow-y-auto bg-gradient-to-b from-transparent to-slate-900/95">
+          <div className="w-full max-w-3xl mx-auto px-4 py-4 pb-10 flex flex-col gap-4">
+            <ControlsContent />
+          </div>
+        </main>
+      </div>
+
+      {/* 넓은 뷰포트(1024px 이상): 풀스크린 비주얼라이저 + 하단 오버레이 */}
+      <div className="hidden lg:block fixed inset-0 w-full h-full z-0">
         <Visualizer 
             isPlaying={isPlaying} 
             events={events} 
@@ -228,39 +440,39 @@ const App: React.FC = () => {
         />
         
         {/* Header - Overlay */}
-        <header className="absolute top-0 left-0 w-full p-3 md:p-6 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20 pointer-events-auto">
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <Sparkles className="text-sky-400 fill-sky-400/20" size={16} />
-            <h1 className="text-sm md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">
+        <header className="absolute top-0 left-0 w-full p-6 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20 pointer-events-auto">
+          <div className="flex items-center gap-2">
+            <Sparkles className="text-sky-400 fill-sky-400/20" size={20} />
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">
               MORSE MELODY AI
             </h1>
           </div>
-          <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-xs font-mono text-slate-400">
-             <span className="hidden md:inline px-3 py-1 rounded-full bg-white/5 border border-white/10">English / Hangul / Numbers</span>
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
+             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">English / Hangul / Numbers</span>
           </div>
         </header>
 
         {/* Status Overlay - Floating Glass */}
-        <div className="absolute top-14 md:top-20 left-3 md:left-6 pointer-events-none z-10">
+        <div className="absolute top-20 left-6 pointer-events-none z-10">
           <div
             className={`transition-all duration-700 transform ${
               isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
             }`}
           >
-            <div className="backdrop-blur-sm bg-black/40 p-2 md:p-4 rounded-lg md:rounded-xl border border-white/10 shadow-2xl">
-              <div className="flex flex-col gap-0.5 md:gap-1">
-                <span className="text-[8px] md:text-[10px] font-mono uppercase text-slate-400 tracking-widest">
+            <div className="backdrop-blur-sm bg-black/40 p-4 rounded-xl border border-white/10 shadow-2xl">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-mono uppercase text-slate-400 tracking-widest">
                   {isAutoTheme ? 'Auto Mood' : 'Custom Mood'}
                 </span>
                 <span
-                  className="text-lg md:text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                  className="text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                   style={{ color: theme.primaryColor }}
                 >
                   {theme.mood}
                 </span>
-                <div className="flex gap-1 md:gap-2 text-[8px] md:text-[10px] text-slate-400 font-mono mt-1 md:mt-2 uppercase tracking-wide">
-                  <span className="bg-white/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded">{theme.waveform}</span>
-                  <span className="bg-white/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded">{theme.baseFrequency}Hz</span>
+                <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-2 uppercase tracking-wide">
+                  <span className="bg-white/10 px-2 py-1 rounded">{theme.waveform}</span>
+                  <span className="bg-white/10 px-2 py-1 rounded">{theme.baseFrequency}Hz</span>
                 </div>
               </div>
             </div>
@@ -268,276 +480,10 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Controls - Fixed at bottom, scrollable */}
-      <main className="fixed bottom-0 left-0 right-0 w-full max-h-[70vh] md:max-h-[60vh] overflow-y-auto z-30 bg-gradient-to-t from-slate-900/95 via-slate-900/90 to-transparent backdrop-blur-xl pointer-events-auto">
-        <div className="w-full max-w-3xl mx-auto px-4 md:px-6 py-4 md:py-10 flex flex-col gap-4 md:gap-8">
-        {/* Text Input */}
-        <div className="relative group">
-          <div
-            className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
-              isPlaying ? 'animate-pulse opacity-60' : ''
-            }`}
-          ></div>
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={`Write something... Your words will become music.\n(Try: 'I love you' or '오늘 밤하늘이 참 아름답네요')`}
-            className="relative w-full h-28 md:h-40 bg-slate-900/80 backdrop-blur-xl text-white p-4 md:p-6 rounded-xl md:rounded-2xl focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-base md:text-lg leading-relaxed tracking-wide"
-            style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
-            disabled={isPlaying}
-          />
-        </div>
-
-        {/* Theme Controls */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs font-mono text-slate-300">
-          <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-2 md:mb-3">
-              <span className="uppercase tracking-widest text-[9px] md:text-[10px] text-slate-400">
-                Theme Mode
-              </span>
-              <button
-                onClick={() => setIsAutoTheme(!isAutoTheme)}
-                className="text-[10px] md:text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition"
-              >
-                {isAutoTheme ? '자동' : '수동'}
-              </button>
-            </div>
-            <p className="text-[10px] md:text-[11px] text-slate-500 leading-relaxed">
-              자동 모드는 텍스트 안의 키워드와 길이를 보고 분위기를 추정합니다.
-              수동 모드에서는 아래에서 직접 무드/파형/속도/스케일을 고를 수 있어요.
-            </p>
-          </div>
-
-          <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md flex flex-col gap-2">
-            <span className="uppercase tracking-widest text-[9px] md:text-[10px] text-slate-400 mb-1">
-              Quick Presets
-            </span>
-            <div className="flex flex-wrap gap-1.5 md:gap-2">
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-sky-500/20 border border-sky-400/40 hover:bg-sky-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Dreamy');
-                  setSelectedWaveform('triangle');
-                  setSelectedScale('dreamy');
-                  setSelectedTempo(0.9);
-                  setSelectedBaseFreq(420);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Dreamy Night
-              </button>
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Melancholic');
-                  setSelectedWaveform('sine');
-                  setSelectedScale('minor');
-                  setSelectedTempo(0.8);
-                  setSelectedBaseFreq(400);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Soft Melancholy
-              </button>
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Serene');
-                  setSelectedWaveform('sine');
-                  setSelectedScale('serene');
-                  setSelectedTempo(0.85);
-                  setSelectedBaseFreq(440);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Serene Morning
-              </button>
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 hover:bg-cyan-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Gentle');
-                  setSelectedWaveform('triangle');
-                  setSelectedScale('gentle');
-                  setSelectedTempo(0.75);
-                  setSelectedBaseFreq(380);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Gentle Rain
-              </button>
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-rose-500/20 border border-rose-400/40 hover:bg-rose-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Cozy');
-                  setSelectedWaveform('sine');
-                  setSelectedScale('cozy');
-                  setSelectedTempo(0.9);
-                  setSelectedBaseFreq(410);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Cozy Evening
-              </button>
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Peaceful');
-                  setSelectedWaveform('triangle');
-                  setSelectedScale('peaceful');
-                  setSelectedTempo(0.7);
-                  setSelectedBaseFreq(360);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Peaceful Night
-              </button>
-              <button
-                className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-teal-500/20 border border-teal-400/40 hover:bg-teal-500/30 text-[9px] md:text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Tranquil');
-                  setSelectedWaveform('sine');
-                  setSelectedScale('tranquil');
-                  setSelectedTempo(0.82);
-                  setSelectedBaseFreq(430);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Tranquil Forest
-              </button>
-            </div>
-          </div>
-
-          {!isAutoTheme && (
-            <>
-              <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md flex flex-col gap-2 md:gap-3">
-                <div>
-                  <label className="block text-[10px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">
-                    Mood (text)
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedMood}
-                    onChange={(e) => setSelectedMood(e.target.value)}
-                    placeholder="예: Dreamy, Energetic..."
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-md px-2 py-1 text-[11px] md:text-[12px] focus:outline-none focus:ring-1 focus:ring-sky-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">
-                    Waveform
-                  </label>
-                  <select
-                    value={selectedWaveform}
-                    onChange={(e) =>
-                      setSelectedWaveform(e.target.value as OscillatorType | '')
-                    }
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-md px-2 py-1 text-[11px] md:text-[12px] focus:outline-none focus:ring-1 focus:ring-sky-500"
-                  >
-                    <option value="">기본 (sine)</option>
-                    <option value="sine">sine</option>
-                    <option value="triangle">triangle</option>
-                    <option value="square">square</option>
-                    <option value="sawtooth">sawtooth</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md flex flex-col gap-2 md:gap-3">
-                <div>
-                  <label className="block text-[10px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">
-                    Tempo
-                  </label>
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={2}
-                    step={0.05}
-                    value={typeof selectedTempo === 'number' ? selectedTempo : 1}
-                    onChange={(e) => setSelectedTempo(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="text-[10px] md:text-[11px] text-slate-400 mt-1">
-                    {typeof selectedTempo === 'number'
-                      ? `${selectedTempo.toFixed(2)}x`
-                      : '1.00x (기본 속도)'}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">
-                    Base Frequency (Hz)
-                  </label>
-                  <input
-                    type="number"
-                    min={200}
-                    max={600}
-                    value={typeof selectedBaseFreq === 'number' ? selectedBaseFreq : 440}
-                    onChange={(e) =>
-                      setSelectedBaseFreq(
-                        e.target.value ? parseInt(e.target.value, 10) : ''
-                      )
-                    }
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-md px-2 py-1 text-[11px] md:text-[12px] focus:outline-none focus:ring-1 focus:ring-sky-500"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md flex flex-col gap-2 md:gap-3 md:col-span-2">
-                <div>
-                  <label className="block text-[10px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">
-                    Scale
-                  </label>
-                  <select
-                    value={selectedScale}
-                    onChange={(e) => setSelectedScale(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-md px-2 py-1 text-[11px] md:text-[12px] focus:outline-none focus:ring-1 focus:ring-sky-500 md:w-64"
-                  >
-                    <option value="">기본 (Major Pentatonic)</option>
-                    <option value="major">Major Pentatonic</option>
-                    <option value="minor">Minor Pentatonic</option>
-                    <option value="dreamy">Dreamy</option>
-                    <option value="dark">Dark</option>
-                  </select>
-                </div>
-                <p className="text-[10px] md:text-[11px] text-slate-500 leading-relaxed">
-                  스케일은 어떤 음들로 멜로디를 만들지 결정해요. Major는 밝고, Minor는 조금 더 서정적이고,
-                  Dreamy/Dark는 실험적인 느낌을 줍니다.
-                </p>
-              </div>
-            </>
-          )}
-        </section>
-
-        <div className="flex justify-center">
-          <button
-            onClick={handlePlay}
-            className={`
-                relative px-6 md:px-10 py-3 md:py-5 rounded-full font-bold text-sm md:text-lg flex items-center gap-2 md:gap-3 transition-all transform hover:scale-105 active:scale-95 border
-                ${isPlaying 
-                    ? 'bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500/20 backdrop-blur-md' 
-                    : 'bg-white text-slate-900 border-white hover:bg-sky-50 shadow-[0_0_30px_rgba(56,189,248,0.4)]'
-                }
-            `}
-          >
-             {isPlaying ? (
-                <>
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    <span>Stop</span>
-                </>
-             ) : (
-                <>
-                    <Music className="w-4 md:w-5 h-4 md:h-5" />
-                    <span>Generate Music</span>
-                </>
-             )}
-          </button>
-        </div>
-
-        {/* How it works - Minimal */}
-        <div className="mt-2 md:mt-4 flex justify-center opacity-60 hover:opacity-100 transition-opacity">
-          <p className="text-center text-[10px] md:text-xs font-mono text-slate-400 max-w-md leading-relaxed md:leading-loose px-2">
-            Your text is converted into Morse code rhythm and played as a melodic sequence with ambient accompaniment and reactive visuals. No external AI or API is used.
-          </p>
-        </div>
+      {/* Controls - Desktop: Fixed at bottom (1024px 이상에서만) */}
+      <main className="hidden lg:flex fixed bottom-0 left-0 right-0 w-full max-h-[60vh] overflow-y-auto z-30 bg-gradient-to-t from-slate-900/95 via-slate-900/90 to-transparent backdrop-blur-xl pointer-events-auto">
+        <div className="w-full max-w-3xl mx-auto px-6 py-10 flex flex-col gap-8">
+          <ControlsContent />
         </div>
       </main>
     </div>

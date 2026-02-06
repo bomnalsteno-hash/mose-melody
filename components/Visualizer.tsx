@@ -66,11 +66,12 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Handle high DPI - 전체 화면 크기로 설정
+    // Handle high DPI - 컨테이너 크기에 맞춤
     const dpr = window.devicePixelRatio || 1;
     const updateSize = () => {
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     };
@@ -79,8 +80,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
     window.addEventListener('resize', updateSize);
 
     const render = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
       ctx.clearRect(0, 0, width, height);
       
       // 1. Draw Space Background
@@ -109,10 +111,16 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
          currentTime = audioCtxRef.current.currentTime - startTimeRef.current - 0.1; 
       }
 
-      // Drawing Constants
-      const trackY = height / 2;
+      // 비주얼라이저 정중앙: height 비율로 좌표 계산 (고정 픽셀 대신)
+      const centerY = height / 2;
       const speed = 200; // pixels per second moving left
-      const playheadX = width / 2; // Playhead in CENTER for more dramatic effect
+      const playheadX = width / 2; // Playhead in CENTER
+      // 라벨·트랙 모두 height 비율로 → 작은 창에서도 중앙 부근에 유지
+      const labelRadius = Math.min(80, height * 0.25);
+      const trackOffsetFromCenter = height * 0.12; // 예: 60px 대신 ~12% 높이
+      const labelY = centerY; // 문자 정확히 중앙
+      const trackY = centerY + trackOffsetFromCenter; // 모스 타임라인은 중앙 아래(비율)
+      const labelFontSize = Math.min(40, Math.max(20, height * 0.12));
 
       // Enable additive blending for "glow" look
       ctx.globalCompositeOperation = 'lighter';
@@ -122,10 +130,11 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         if (event.type === 'note') {
             const relativeTime = event.startTime - currentTime;
             const x = playheadX + (relativeTime * speed);
-            const width = Math.max(event.duration * speed - 2, 2);
+            const noteWidth = Math.max(event.duration * speed - 2, 2);
             
             // Optimization: Only draw if on screen
-            if (x + width > -100 && x < window.innerWidth + 100) {
+            const rect = canvas.getBoundingClientRect();
+            if (x + noteWidth > -100 && x < rect.width + 100) {
                 const isActive = currentTime >= event.startTime && currentTime <= (event.startTime + event.duration);
                 
                 // Color logic
@@ -140,11 +149,13 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                const height = event.symbol === MorseSymbol.DASH ? 40 : 16;
-                const y = trackY - height / 2;
+                const noteHeight = event.symbol === MorseSymbol.DASH
+                  ? Math.max(16, height * 0.12)
+                  : Math.max(8, height * 0.05);
+                const y = trackY - noteHeight / 2;
                 
                 ctx.beginPath();
-                ctx.roundRect(x, y, width, height, 8);
+                ctx.roundRect(x, y, noteWidth, noteHeight, 8);
                 ctx.fill();
 
                 // Trigger Particles on Note Start
@@ -159,7 +170,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       // 4. Draw Particles
       updateAndDrawParticles(ctx, theme);
 
-      // 5. Draw current character label above playhead
+      // 5. Draw current character label (정확히 비주얼라이저 세로 중앙)
       const activeIndex = lastActiveEventIndex.current;
       if (activeIndex >= 0 && activeIndex < events.length) {
         const active = events[activeIndex];
@@ -167,23 +178,22 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         if (charLabel) {
           ctx.save();
           ctx.globalCompositeOperation = 'lighter';
-          const labelY = trackY - 80;
           const glowGradient = ctx.createRadialGradient(
             playheadX,
             labelY,
             0,
             playheadX,
             labelY,
-            80
+            labelRadius
           );
           glowGradient.addColorStop(0, theme.primaryColor.replace(')', ',0.4)').replace('rgb', 'rgba'));
           glowGradient.addColorStop(1, 'rgba(15,23,42,0)');
           ctx.fillStyle = glowGradient;
           ctx.beginPath();
-          ctx.arc(playheadX, labelY, 80, 0, Math.PI * 2);
+          ctx.arc(playheadX, labelY, labelRadius, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.font = '600 40px "Space Mono", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          ctx.font = `600 ${labelFontSize}px "Space Mono", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.shadowColor = theme.primaryColor;
@@ -269,9 +279,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    // 전체 화면 기준이므로 clientX/Y를 그대로 사용
-    const x = e.clientX;
-    const y = e.clientY;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
     const last = lastCursorPosRef.current;
     if (last) {
@@ -290,7 +300,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
 
   return (
     <div
-      className="fixed inset-0 w-full h-full shadow-[0_0_60px_rgba(15,23,42,0.9)] z-0 overflow-hidden"
+      className="relative w-full h-full shadow-[0_0_60px_rgba(15,23,42,0.9)] overflow-hidden"
       onMouseMove={handleMouseMove}
     >
         {/* Vignette Overlay for cinematic feel */}
