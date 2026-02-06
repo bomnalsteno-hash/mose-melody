@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const totalDurationRef = useRef<number>(0);
   const [playbackProgress, setPlaybackProgress] = useState(0); // 0~1 사이 진척도
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputValueRef = useRef(''); // 한글 IME + Strict Mode 대응: ref에만 보관 후 마운트 시 복원
 
   // 미리 정의된 스케일 프리셋
   const scalePresets: Record<string, number[]> = {
@@ -127,11 +128,20 @@ const App: React.FC = () => {
     };
   };
 
-  // 비제어 입력과 동기화: ref 값을 state에 반영 (프리뷰용)
+  // 비제어 입력: DOM/ref 값만 갱신, state는 blur/compositionEnd에서만 (프리뷰용)
   const syncInputToState = () => {
     const v = inputRef.current?.value ?? '';
+    inputValueRef.current = v;
     setInputText(v);
   };
+
+  // Strict Mode 이중 마운트 시 ref에 보관한 값 복원 (한글 입력 유지)
+  useEffect(() => {
+    if (!inputRef.current) return;
+    if (inputValueRef.current !== inputRef.current.value) {
+      inputRef.current.value = inputValueRef.current;
+    }
+  });
 
   // Initialize events when text changes (preview mode)
   useEffect(() => {
@@ -155,7 +165,7 @@ const App: React.FC = () => {
       return;
     }
 
-    const text = (inputRef.current?.value ?? inputText).trim();
+    const text = (inputRef.current?.value ?? inputValueRef.current ?? inputText).trim();
     if (!text) return;
 
     // 1. 테마 결정 (자동 / 수동)
@@ -229,10 +239,15 @@ const App: React.FC = () => {
         ></div>
         <textarea
           ref={inputRef}
-          defaultValue=""
           onBlur={syncInputToState}
-          onCompositionEnd={(e) => setInputText(e.currentTarget.value)}
-          onInput={() => requestAnimationFrame(syncInputToState)}
+          onCompositionEnd={(e) => {
+            inputValueRef.current = e.currentTarget.value;
+            setInputText(e.currentTarget.value);
+          }}
+          onInput={(e) => {
+            inputValueRef.current = e.currentTarget.value;
+            requestAnimationFrame(syncInputToState);
+          }}
           placeholder="Write something..."
           rows={2}
           className="relative w-full h-14 md:h-16 py-2 px-3 rounded-lg bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-sm leading-snug tracking-wide"
