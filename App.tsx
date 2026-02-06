@@ -23,7 +23,8 @@ const App: React.FC = () => {
   const startTimeRef = useRef<number>(0);
   const totalDurationRef = useRef<number>(0);
   const [playbackProgress, setPlaybackProgress] = useState(0); // 0~1 사이 진척도
-  const inputRef = useRef<HTMLTextAreaElement>(null); // 한글 IME 대응: 비제어 입력용
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const isComposingRef = useRef(false);
 
   // 미리 정의된 스케일 프리셋
   const scalePresets: Record<string, number[]> = {
@@ -149,7 +150,7 @@ const App: React.FC = () => {
       return;
     }
 
-    const text = (inputRef.current?.value ?? inputText).trim();
+    const text = inputText.trim();
     if (!text) return;
 
     // 1. 테마 결정 (자동 / 수동)
@@ -223,15 +224,14 @@ const App: React.FC = () => {
         ></div>
         <textarea
           ref={inputRef}
-          defaultValue=""
-          onBlur={() => setInputText(inputRef.current?.value ?? '')}
-          onCompositionEnd={(e) => setInputText(e.currentTarget.value)}
-          onChange={() => {
-            // 한글 조합 직후 등 DOM 반영 후 state 동기화 (프리뷰용)
-            requestAnimationFrame(() => {
-              const v = inputRef.current?.value ?? '';
-              setInputText(v);
-            });
+          value={inputText}
+          onCompositionStart={() => { isComposingRef.current = true; }}
+          onCompositionEnd={(e) => {
+            isComposingRef.current = false;
+            setInputText(e.currentTarget.value);
+          }}
+          onChange={(e) => {
+            if (!isComposingRef.current) setInputText(e.target.value);
           }}
           placeholder="Write something..."
           rows={1}
@@ -389,7 +389,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-1.5 min-w-0">
             <Sparkles className="text-sky-400 fill-sky-400/20 flex-shrink-0" size={16} />
             <h1 className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider truncate">
-              MORSE MELODY AI
+              MORSE MELODY
             </h1>
           </div>
         </header>
@@ -455,7 +455,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="text-sky-400 fill-sky-400/20" size={20} />
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">
-              MORSE MELODY AI
+              MORSE MELODY
             </h1>
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-slate-400">

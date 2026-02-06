@@ -29,6 +29,13 @@ interface Star {
     speed: number;
 }
 
+// 문자별 모스 블록 색상 팔레트 (모스 코드가 바뀔 때마다 색이 바뀌도록)
+const NOTE_PALETTE = [
+  '#38bdf8', '#a78bfa', '#f472b6', '#34d399', '#fbbf24',
+  '#60a5fa', '#c084fc', '#fb7185', '#2dd4bf', '#facc15',
+  '#22d3ee', '#818cf8', '#f97316', '#4ade80', '#e879f9',
+];
+
 const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audioCtxRef, startTimeRef }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
@@ -125,6 +132,17 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       // Enable additive blending for "glow" look
       ctx.globalCompositeOperation = 'lighter';
 
+      // 문자 순서대로 색 할당 (문자가 바뀔 때마다 아름답게 색 변경)
+      const charColorMap: Record<string, string> = {};
+      let colorIndex = 0;
+      events.forEach((ev) => {
+        const c = ev.char ?? '';
+        if (c && charColorMap[c] === undefined) {
+          charColorMap[c] = NOTE_PALETTE[colorIndex % NOTE_PALETTE.length];
+          colorIndex++;
+        }
+      });
+
       // 3. Draw Timeline (Notes)
       events.forEach((event, index) => {
         if (event.type === 'note') {
@@ -136,16 +154,14 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
             const rect = canvas.getBoundingClientRect();
             if (x + noteWidth > -100 && x < rect.width + 100) {
                 const isActive = currentTime >= event.startTime && currentTime <= (event.startTime + event.duration);
+                const noteColor = event.char ? (charColorMap[event.char] ?? theme.primaryColor) : theme.primaryColor;
                 
-                // Color logic
-                ctx.fillStyle = isActive ? '#ffffff' : theme.primaryColor;
-                
-                // Add intense glow if active
+                ctx.fillStyle = isActive ? '#ffffff' : noteColor;
                 if (isActive) {
-                    ctx.shadowColor = theme.primaryColor;
+                    ctx.shadowColor = noteColor;
                     ctx.shadowBlur = 30;
                 } else {
-                    ctx.shadowColor = theme.primaryColor;
+                    ctx.shadowColor = noteColor;
                     ctx.shadowBlur = 5;
                 }
 
