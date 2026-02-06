@@ -375,20 +375,21 @@ const App: React.FC = () => {
           <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-900/20 blur-[100px]"></div>
       </div>
 
-      {/* 좁은 뷰포트(모바일·창 축소): h-[100dvh] + flex, 비주얼라이저 고정 + 하단 패널 스크롤 */}
-      <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden">
-        {/* Header - flex-none 고정 높이 */}
-        <header className="flex-none w-full p-3 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Sparkles className="text-sky-400 fill-sky-400/20 flex-shrink-0" size={16} />
-            <h1 className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider truncate">
-              MORSE MELODY
-            </h1>
-          </div>
-        </header>
+      {/* 단일 레이아웃: 입력창이 하나만 있어야 입력이 정상 동작 */}
+      <div className="flex flex-col h-[100dvh] lg:h-screen overflow-hidden">
+        {/* 모바일: 헤더 + 비주얼라이저 / 데스크톱: 비주얼라이저만 이 블록에 */}
+        <div className="lg:hidden flex-none">
+          <header className="w-full p-3 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Sparkles className="text-sky-400 fill-sky-400/20 flex-shrink-0" size={16} />
+              <h1 className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider truncate">
+                MORSE MELODY
+              </h1>
+            </div>
+          </header>
+        </div>
 
-        {/* Visualizer - flex-none, h-[40dvh] / min-h-[280px] */}
-        <div className="relative w-full flex-none h-[40dvh] min-h-[280px] z-10">
+        <div className="relative w-full flex-none h-[40dvh] min-h-[280px] lg:fixed lg:inset-0 lg:h-full lg:min-h-0 z-10">
           <Visualizer 
               isPlaying={isPlaying} 
               events={events} 
@@ -396,25 +397,13 @@ const App: React.FC = () => {
               audioCtxRef={audioCtxRef}
               startTimeRef={startTimeRef}
           />
-          
-          {/* Status Overlay - Mobile */}
-          <div className="absolute top-3 left-3 pointer-events-none z-10">
-            <div
-              className={`transition-all duration-700 transform ${
-                isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-              }`}
-            >
+          {/* Status Overlay - 모바일 */}
+          <div className="lg:hidden absolute top-3 left-3 pointer-events-none z-10">
+            <div className={`transition-all duration-700 transform ${isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
               <div className="backdrop-blur-sm bg-black/40 p-2 rounded-lg border border-white/10 shadow-2xl">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[8px] font-mono uppercase text-slate-400 tracking-widest">
-                    {isAutoTheme ? 'Auto Mood' : 'Custom Mood'}
-                  </span>
-                  <span
-                    className="text-lg font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-                    style={{ color: theme.primaryColor }}
-                  >
-                    {theme.mood}
-                  </span>
+                  <span className="text-[8px] font-mono uppercase text-slate-400 tracking-widest">{isAutoTheme ? 'Auto Mood' : 'Custom Mood'}</span>
+                  <span className="text-lg font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" style={{ color: theme.primaryColor }}>{theme.mood}</span>
                   <div className="flex gap-1 text-[8px] text-slate-400 font-mono mt-1 uppercase tracking-wide">
                     <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.waveform}</span>
                     <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.baseFrequency}Hz</span>
@@ -425,55 +414,23 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* 메인 패널 - flex-1 min-h-0 overflow-y-auto, 스크롤 끝까지 pb 여유 */}
-        <main className="flex-1 min-h-0 w-full overflow-y-auto bg-gradient-to-b from-transparent to-slate-900/95">
-          <div className="w-full max-w-3xl mx-auto px-4 py-4 pb-10 flex flex-col gap-4">
-            <ControlsContent />
-          </div>
-        </main>
-      </div>
-
-      {/* 넓은 뷰포트(1024px 이상): 풀스크린 비주얼라이저 + 하단 오버레이 */}
-      <div className="hidden lg:block fixed inset-0 w-full h-full z-0">
-        <Visualizer 
-            isPlaying={isPlaying} 
-            events={events} 
-            theme={theme}
-            audioCtxRef={audioCtxRef}
-            startTimeRef={startTimeRef}
-        />
-        
-        {/* Header - Overlay */}
-        <header className="absolute top-0 left-0 w-full p-6 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20 pointer-events-auto">
+        {/* 데스크톱: 헤더 오버레이 */}
+        <header className="hidden lg:flex absolute top-0 left-0 w-full p-6 items-center justify-between bg-slate-900/30 backdrop-blur-md z-20 pointer-events-auto">
           <div className="flex items-center gap-2">
             <Sparkles className="text-sky-400 fill-sky-400/20" size={20} />
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">
-              MORSE MELODY
-            </h1>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">MORSE MELODY</h1>
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
-             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">English / Hangul / Numbers</span>
+            <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">English / Hangul / Numbers</span>
           </div>
         </header>
-
-        {/* Status Overlay - Floating Glass */}
-        <div className="absolute top-20 left-6 pointer-events-none z-10">
-          <div
-            className={`transition-all duration-700 transform ${
-              isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-            }`}
-          >
+        {/* 데스크톱: Status Overlay */}
+        <div className="hidden lg:block absolute top-20 left-6 pointer-events-none z-10">
+          <div className={`transition-all duration-700 transform ${isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
             <div className="backdrop-blur-sm bg-black/40 p-4 rounded-xl border border-white/10 shadow-2xl">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-mono uppercase text-slate-400 tracking-widest">
-                  {isAutoTheme ? 'Auto Mood' : 'Custom Mood'}
-                </span>
-                <span
-                  className="text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-                  style={{ color: theme.primaryColor }}
-                >
-                  {theme.mood}
-                </span>
+                <span className="text-[10px] font-mono uppercase text-slate-400 tracking-widest">{isAutoTheme ? 'Auto Mood' : 'Custom Mood'}</span>
+                <span className="text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" style={{ color: theme.primaryColor }}>{theme.mood}</span>
                 <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-2 uppercase tracking-wide">
                   <span className="bg-white/10 px-2 py-1 rounded">{theme.waveform}</span>
                   <span className="bg-white/10 px-2 py-1 rounded">{theme.baseFrequency}Hz</span>
@@ -482,14 +439,14 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Controls - Desktop: Fixed at bottom (1024px 이상에서만) */}
-      <main className="hidden lg:flex fixed bottom-0 left-0 right-0 w-full max-h-[60vh] overflow-y-auto z-30 bg-gradient-to-t from-slate-900/95 via-slate-900/90 to-transparent backdrop-blur-xl pointer-events-auto">
-        <div className="w-full max-w-3xl mx-auto px-6 py-10 flex flex-col gap-8">
-          <ControlsContent />
-        </div>
-      </main>
+        {/* 메인 패널 단 하나: 모바일은 flex-1 스크롤, 데스크톱은 fixed 하단 */}
+        <main className="flex-1 min-h-0 w-full overflow-y-auto lg:flex-none lg:fixed lg:bottom-0 lg:left-0 lg:right-0 lg:max-h-[60vh] lg:min-h-0 z-30 bg-gradient-to-b from-transparent to-slate-900/95 lg:bg-gradient-to-t lg:from-slate-900/95 lg:via-slate-900/90 lg:to-transparent backdrop-blur-xl">
+          <div className="w-full max-w-3xl mx-auto px-4 py-4 pb-10 lg:px-6 lg:py-10 flex flex-col gap-4 lg:gap-8">
+            <ControlsContent />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
