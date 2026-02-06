@@ -38,7 +38,8 @@ export class AudioEngine {
 
       // Bus for Pad (Accompaniment)
       this.padGain = this.audioCtx.createGain();
-      this.padGain.gain.value = 0.3; // Softer background
+      // 반주(패드)는 멜로디보다 한참 작게
+      this.padGain.gain.value = 0.18;
 
       // Delay Effect (Echo)
       this.delayNode = this.audioCtx.createDelay();
@@ -64,46 +65,50 @@ export class AudioEngine {
     }
   }
 
-  // Generate a rich ambient drone based on the theme's base frequency
+  // Generate a rich ambient drone based on the theme
   private startDrone(theme: ThemeConfig) {
     if (!this.audioCtx || !this.padGain) return;
 
     // Stop existing pads if any
     this.stopDrone();
 
-    const rootFreq = theme.baseFrequency / 2; // Lower octave for bass/pad
-    const fifthFreq = rootFreq * 1.5; // Perfect fifth
+    const baseFreq = theme.baseFrequency / 2; // Lower octave for bass/pad
 
-    // Create a "Super Saw" style pad using multiple detuned oscillators
-    const freqs = [
-        rootFreq, 
-        rootFreq * 1.01, // Detuned
-        rootFreq * 0.99, // Detuned
-        fifthFreq,
-        fifthFreq * 1.005
-    ];
+    // 테마 스케일 기반으로 코드 톤을 뽑아서 매 재생마다 약간씩 다른 느낌
+    const scale = theme.scale && theme.scale.length > 0 ? theme.scale : [0, 4, 7];
+    const pickIndex = () => Math.floor(Math.random() * scale.length);
+    const idx1 = pickIndex();
+    const idx2 = (idx1 + 1) % scale.length;
+    const idx3 = (idx1 + 2) % scale.length;
+
+    const offsets = [scale[idx1] - 12, scale[idx2] - 12, scale[idx3] - 12];
+    const freqs = offsets.map(semitone => baseFreq * Math.pow(2, semitone / 12));
 
     const now = this.audioCtx.currentTime;
 
     // Filter to make it warm and soft
     const filter = this.audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(800, now);
+    // 느린 곡일수록 조금 더 어둡게
+    const baseCutoff = 700;
+    const tempoFactor = Math.min(Math.max(theme.tempoMultiplier, 0.5), 2);
+    filter.frequency.setValueAtTime(baseCutoff * tempoFactor, now);
     filter.Q.value = 0.5;
     filter.connect(this.padGain);
 
     freqs.forEach(f => {
-        const osc = this.audioCtx!.createOscillator();
-        osc.type = 'sawtooth'; // Sawtooth provides rich harmonics
-        osc.frequency.value = f;
-        osc.connect(filter);
-        osc.start(now);
-        this.padOscillators.push(osc);
+      const osc = this.audioCtx!.createOscillator();
+      // 테마 파형을 그대로 쓰되, 너무 공격적인 square는 약간 부드럽게
+      osc.type = theme.waveform === 'square' ? 'sawtooth' : theme.waveform;
+      osc.frequency.value = f;
+      osc.connect(filter);
+      osc.start(now);
+      this.padOscillators.push(osc);
     });
 
-    // Fade in
+    // Fade in (더 작게 올라오도록)
     this.padGain.gain.setValueAtTime(0, now);
-    this.padGain.gain.linearRampToValueAtTime(0.25, now + 2.0);
+    this.padGain.gain.linearRampToValueAtTime(0.14, now + 2.0);
   }
 
   private stopDrone() {

@@ -21,6 +21,8 @@ const App: React.FC = () => {
   // These refs are for the Visualizer to access raw audio timing without re-renders
   const audioCtxRef = useRef<AudioContext | null>(null);
   const startTimeRef = useRef<number>(0);
+  const totalDurationRef = useRef<number>(0);
+  const [playbackProgress, setPlaybackProgress] = useState(0); // 0~1 사이 진척도
 
   // 미리 정의된 스케일 프리셋
   const scalePresets: Record<string, number[]> = {
@@ -126,6 +128,12 @@ const App: React.FC = () => {
     setTheme(effectiveTheme);
     const timeline = audioEngineRef.current.generateTimeline(previewText, effectiveTheme);
     setEvents(timeline);
+    if (timeline.length > 0) {
+      const last = timeline[timeline.length - 1];
+      totalDurationRef.current = last.startTime + last.duration;
+    } else {
+      totalDurationRef.current = 0;
+    }
   }, [inputText, isAutoTheme, selectedMood, selectedWaveform, selectedBaseFreq, selectedTempo, selectedScale]);
 
   const handlePlay = async () => {
@@ -144,6 +152,12 @@ const App: React.FC = () => {
     // 2. Generate Audio Timeline
     const timeline = audioEngineRef.current.generateTimeline(inputText, currentTheme);
     setEvents(timeline);
+    if (timeline.length > 0) {
+      const last = timeline[timeline.length - 1];
+      totalDurationRef.current = last.startTime + last.duration;
+    } else {
+      totalDurationRef.current = 0;
+    }
 
     // 3. Play
     setIsPlaying(true);
@@ -162,6 +176,37 @@ const App: React.FC = () => {
         startTimeRef.current = ctx ? ctx.currentTime : 0;
     }, 50);
   };
+
+  // 재생 중에 어떤 부분까지 왔는지 0~1 진척도를 계산
+  useEffect(() => {
+    let frameId: number;
+
+    const update = () => {
+      if (!isPlaying || !audioCtxRef.current) {
+        setPlaybackProgress(0);
+        return;
+      }
+      const rel = audioCtxRef.current.currentTime - startTimeRef.current;
+      const total = totalDurationRef.current || 0.0001;
+      const p = Math.min(Math.max(rel / total, 0), 1);
+      setPlaybackProgress(p);
+      frameId = requestAnimationFrame(update);
+    };
+
+    if (isPlaying) {
+      frameId = requestAnimationFrame(update);
+    } else {
+      setPlaybackProgress(0);
+    }
+
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [isPlaying]);
+
+  const highlightIndex = inputText.length
+    ? Math.min(inputText.length - 1, Math.floor(inputText.length * playbackProgress))
+    : 0;
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col items-center relative overflow-hidden font-sans text-slate-200">
@@ -227,15 +272,34 @@ const App: React.FC = () => {
       <main className="w-full max-w-3xl px-6 py-10 flex flex-col gap-8 flex-grow z-10">
         {/* Text Input */}
         <div className="relative group">
-            <div className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${isPlaying ? 'animate-pulse opacity-60' : ''}`}></div>
-            <textarea
+          <div
+            className={`absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 ${
+              isPlaying ? 'animate-pulse opacity-60' : ''
+            }`}
+          ></div>
+          <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Write something... Your words will become music. 
-(Try: 'I love you' or '오늘 밤하늘이 참 아름답네요')"
-            className="relative w-full h-40 bg-slate-900/80 backdrop-blur-xl text-white p-6 rounded-xl focus:outline-none font-mono resize-none shadow-2xl border border-white/10 placeholder-slate-600 text-lg leading-relaxed"
+            placeholder={`Write something... Your words will become music.\n(Try: 'I love you' or '오늘 밤하늘이 참 아름답네요')`}
+            className="relative w-full h-40 bg-slate-900/80 backdrop-blur-xl text-white p-6 rounded-xl focus:outline-none resize-none shadow-2xl border border-white/10 placeholder-slate-400 text-lg leading-relaxed"
+            style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
             disabled={isPlaying}
-            />
+          />
+
+          {/* Playback text highlight */}
+          {isPlaying && inputText && (
+            <div className="mt-3 text-xs font-mono text-slate-400">
+              <span className="text-slate-500">
+                {inputText.slice(0, highlightIndex)}
+              </span>
+              <span className="text-sky-300 underline decoration-sky-400 decoration-2">
+                {inputText[highlightIndex]}
+              </span>
+              <span className="text-slate-600">
+                {inputText.slice(highlightIndex + 1)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Theme Controls */}
