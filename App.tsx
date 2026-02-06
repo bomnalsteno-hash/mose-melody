@@ -31,6 +31,11 @@ const App: React.FC = () => {
     'minor': [0, 3, 5, 7, 10],
     'dreamy': [0, 2, 5, 9, 11],
     'dark': [0, 1, 4, 6, 10],
+    'serene': [0, 2, 5, 7, 9],
+    'gentle': [0, 3, 5, 8, 10],
+    'cozy': [0, 2, 4, 6, 9],
+    'peaceful': [0, 3, 6, 8, 11],
+    'tranquil': [0, 2, 4, 7, 10],
   };
 
   // 자동 테마 생성 로직 (간단 규칙 기반)
@@ -324,19 +329,6 @@ const App: React.FC = () => {
                 Dreamy Night
               </button>
               <button
-                className="px-3 py-1 rounded-full bg-orange-500/20 border border-orange-400/40 hover:bg-orange-500/30 text-[11px]"
-                onClick={() => {
-                  setSelectedMood('Energetic');
-                  setSelectedWaveform('sawtooth');
-                  setSelectedScale('major');
-                  setSelectedTempo(1.4);
-                  setSelectedBaseFreq(480);
-                  setIsAutoTheme(false);
-                }}
-              >
-                Energetic Day
-              </button>
-              <button
                 className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500/30 text-[11px]"
                 onClick={() => {
                   setSelectedMood('Melancholic');
@@ -348,6 +340,71 @@ const App: React.FC = () => {
                 }}
               >
                 Soft Melancholy
+              </button>
+              <button
+                className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-[11px]"
+                onClick={() => {
+                  setSelectedMood('Serene');
+                  setSelectedWaveform('sine');
+                  setSelectedScale('serene');
+                  setSelectedTempo(0.85);
+                  setSelectedBaseFreq(440);
+                  setIsAutoTheme(false);
+                }}
+              >
+                Serene Morning
+              </button>
+              <button
+                className="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 hover:bg-cyan-500/30 text-[11px]"
+                onClick={() => {
+                  setSelectedMood('Gentle');
+                  setSelectedWaveform('triangle');
+                  setSelectedScale('gentle');
+                  setSelectedTempo(0.75);
+                  setSelectedBaseFreq(380);
+                  setIsAutoTheme(false);
+                }}
+              >
+                Gentle Rain
+              </button>
+              <button
+                className="px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 hover:bg-rose-500/30 text-[11px]"
+                onClick={() => {
+                  setSelectedMood('Cozy');
+                  setSelectedWaveform('sine');
+                  setSelectedScale('cozy');
+                  setSelectedTempo(0.9);
+                  setSelectedBaseFreq(410);
+                  setIsAutoTheme(false);
+                }}
+              >
+                Cozy Evening
+              </button>
+              <button
+                className="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-500/30 text-[11px]"
+                onClick={() => {
+                  setSelectedMood('Peaceful');
+                  setSelectedWaveform('triangle');
+                  setSelectedScale('peaceful');
+                  setSelectedTempo(0.7);
+                  setSelectedBaseFreq(360);
+                  setIsAutoTheme(false);
+                }}
+              >
+                Peaceful Night
+              </button>
+              <button
+                className="px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/40 hover:bg-teal-500/30 text-[11px]"
+                onClick={() => {
+                  setSelectedMood('Tranquil');
+                  setSelectedWaveform('sine');
+                  setSelectedScale('tranquil');
+                  setSelectedTempo(0.82);
+                  setSelectedBaseFreq(430);
+                  setIsAutoTheme(false);
+                }}
+              >
+                Tranquil Forest
               </button>
             </div>
           </div>

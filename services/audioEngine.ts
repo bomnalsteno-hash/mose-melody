@@ -135,13 +135,20 @@ export class AudioEngine {
     const unitTime = this.DOT_TIME / theme.tempoMultiplier;
     let currentTime = 0;
 
-    // Helper to get frequency from scale based on char code
+    // Helper to get frequency from scale - 더 다양하게 만들기 위해 위치와 텍스트 해시 사용
+    let charIndex = 0;
     const getFrequency = (char: string) => {
         const charCode = char.charCodeAt(0);
-        const scaleIndex = charCode % theme.scale.length;
+        const pos = charIndex++;
+        // 텍스트 길이와 위치를 조합해서 더 다양한 패턴
+        const hash = (charCode * 17 + pos * 31 + text.length * 7) % 1000;
+        // 여러 스케일 인덱스를 순환하면서도 랜덤성 추가
+        const scaleIndex = (hash + pos) % theme.scale.length;
         const semitoneOffset = theme.scale[scaleIndex];
+        // 옥타브 변화도 추가 (가끔 한 옥타브 위/아래)
+        const octaveShift = (hash % 7 === 0) ? (hash % 3 === 0 ? 12 : -12) : 0;
         // fn = f0 * (a)^n where a is 2^(1/12)
-        return theme.baseFrequency * Math.pow(2, semitoneOffset / 12);
+        return theme.baseFrequency * Math.pow(2, (semitoneOffset + octaveShift) / 12);
     };
 
     // Reconstruct simplified flow

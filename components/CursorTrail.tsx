@@ -13,6 +13,8 @@ const CursorTrail: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<TrailParticle[]>([]);
   const animationRef = useRef<number>();
+  const lastMousePosRef = useRef<{ x: number; y: number } | null>(null);
+  const mouseVelRef = useRef<{ vx: number; vy: number }>({ vx: 0, vy: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -35,16 +37,34 @@ const CursorTrail: React.FC = () => {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      for (let i = 0; i < 4; i++) {
+      const last = lastMousePosRef.current;
+      if (last) {
+        const dx = x - last.x;
+        const dy = y - last.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0) {
+          mouseVelRef.current = {
+            vx: dx * 0.3,
+            vy: dy * 0.3,
+          };
+        }
+      }
+      lastMousePosRef.current = { x, y };
+
+      // 마우스 위치에서 약간 뒤로 빼서 꼬리처럼 보이게
+      const offsetX = -mouseVelRef.current.vx * 0.5;
+      const offsetY = -mouseVelRef.current.vy * 0.5;
+
+      for (let i = 0; i < 3; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 0.8 + 0.2;
+        const speed = Math.random() * 0.3 + 0.1; // 속도 줄임
         particlesRef.current.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
+          x: x + offsetX,
+          y: y + offsetY,
+          vx: Math.cos(angle) * speed + mouseVelRef.current.vx * 0.2,
+          vy: Math.sin(angle) * speed + mouseVelRef.current.vy * 0.2,
           life: 1,
-          size: Math.random() * 2 + 1.5,
+          size: Math.random() * 1.5 + 1,
         });
       }
     };
