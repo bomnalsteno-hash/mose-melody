@@ -227,8 +227,8 @@ const App: React.FC = () => {
     };
   }, [isPlaying]);
 
-  // 공통 컨트롤 컴포넌트 (모바일/데스크톱 공유)
-  const ControlsContent = () => (
+  // 인라인 JSX만 사용 (함수 컴포넌트 X → 매 렌더 textarea 리마운트 방지)
+  const controlsContentJSX = (
     <>
       {/* 텍스트 입력 - 비제어(한글 IME 정상 동작) + blur/compositionEnd에서만 state 동기화 */}
       <div className="relative group">
@@ -246,7 +246,6 @@ const App: React.FC = () => {
           }}
           onInput={(e) => {
             inputValueRef.current = e.currentTarget.value;
-            requestAnimationFrame(syncInputToState);
           }}
           placeholder="Write something..."
           rows={2}
@@ -465,7 +464,7 @@ const App: React.FC = () => {
         {/* 메인 패널 단 하나: 모바일은 flex-1 스크롤, 데스크톱은 fixed 하단 */}
         <main className="flex-1 min-h-0 w-full overflow-y-auto lg:flex-none lg:fixed lg:bottom-0 lg:left-0 lg:right-0 lg:max-h-[60vh] lg:min-h-0 z-30 bg-gradient-to-b from-transparent to-slate-900/95 lg:bg-gradient-to-t lg:from-slate-900/95 lg:via-slate-900/90 lg:to-transparent backdrop-blur-xl">
           <div className="w-full max-w-3xl mx-auto px-4 py-4 pb-10 lg:px-6 lg:py-10 flex flex-col gap-4 lg:gap-8">
-            <ControlsContent />
+            {controlsContentJSX}
           </div>
         </main>
       </div>
