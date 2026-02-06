@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AudioEngine } from './services/audioEngine';
 import Visualizer from './components/Visualizer';
-import CursorTrail from './components/CursorTrail';
 import { ThemeConfig, DEFAULT_THEME, PlaybackEvent } from './types';
 import { Music, Sparkles } from 'lucide-react';
 
@@ -211,30 +210,15 @@ const App: React.FC = () => {
   }, [isPlaying]);
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex flex-col items-center relative overflow-hidden font-sans text-slate-200">
-      <CursorTrail />
-      
+    <div className="min-h-screen bg-[#0f172a] flex flex-col relative overflow-hidden font-sans text-slate-200">
       {/* Background Ambience */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
           <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/20 blur-[100px]"></div>
           <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-900/20 blur-[100px]"></div>
       </div>
 
-      {/* Header */}
-      <header className="w-full p-6 flex items-center justify-between border-b border-white/5 bg-slate-900/30 backdrop-blur-md sticky top-0 z-20">
-        <div className="flex items-center gap-2">
-          <Sparkles className="text-sky-400 fill-sky-400/20" size={20} />
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">
-            MORSE MELODY AI
-          </h1>
-        </div>
-        <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
-           <span className="hidden md:inline px-3 py-1 rounded-full bg-white/5 border border-white/10">English / Hangul / Numbers</span>
-        </div>
-      </header>
-
-      {/* Visualizer Area - Full width with cinematic feel */}
-      <div className="w-full relative z-10 border-b border-white/10">
+      {/* Visualizer Area - Full screen */}
+      <div className="fixed inset-0 w-full h-full z-0">
         <Visualizer 
             isPlaying={isPlaying} 
             events={events} 
@@ -243,8 +227,21 @@ const App: React.FC = () => {
             startTimeRef={startTimeRef}
         />
         
+        {/* Header - Overlay */}
+        <header className="absolute top-0 left-0 w-full p-6 flex items-center justify-between bg-slate-900/30 backdrop-blur-md z-20 pointer-events-auto">
+          <div className="flex items-center gap-2">
+            <Sparkles className="text-sky-400 fill-sky-400/20" size={20} />
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-purple-300 to-pink-300 font-mono tracking-wider">
+              MORSE MELODY AI
+            </h1>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
+             <span className="hidden md:inline px-3 py-1 rounded-full bg-white/5 border border-white/10">English / Hangul / Numbers</span>
+          </div>
+        </header>
+
         {/* Status Overlay - Floating Glass */}
-        <div className="absolute top-6 left-6 pointer-events-none">
+        <div className="absolute top-20 left-6 pointer-events-none z-10">
           <div
             className={`transition-all duration-700 transform ${
               isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
@@ -271,8 +268,9 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Controls */}
-      <main className="w-full max-w-3xl px-6 py-10 flex flex-col gap-8 flex-grow z-10">
+      {/* Controls - Fixed at bottom, scrollable */}
+      <main className="fixed bottom-0 left-0 right-0 w-full max-h-[60vh] overflow-y-auto z-30 bg-gradient-to-t from-slate-900/95 via-slate-900/90 to-transparent backdrop-blur-xl pointer-events-auto">
+        <div className="w-full max-w-3xl mx-auto px-6 py-10 flex flex-col gap-8">
         {/* Text Input */}
         <div className="relative group">
           <div
@@ -540,7 +538,7 @@ const App: React.FC = () => {
             Your text is converted into Morse code rhythm and played as a melodic sequence with ambient accompaniment and reactive visuals. No external AI or API is used.
           </p>
         </div>
-
+        </div>
       </main>
     </div>
   );

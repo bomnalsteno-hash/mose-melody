@@ -66,23 +66,30 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Handle high DPI
+    // Handle high DPI - 전체 화면 크기로 설정
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    const updateSize = () => {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+    
+    updateSize();
+    window.addEventListener('resize', updateSize);
 
     const render = () => {
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      ctx.clearRect(0, 0, width, height);
       
       // 1. Draw Space Background
       // Gradient
-      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
       gradient.addColorStop(0, '#020617'); // Very dark blue/black
       gradient.addColorStop(1, '#0f172a');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillRect(0, 0, width, height);
 
       // Stars
       ctx.fillStyle = '#ffffff';
@@ -91,7 +98,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
           const opacity = 0.3 + Math.abs(Math.sin(Date.now() * 0.001 * star.speed + star.x * 10)) * 0.7;
           ctx.globalAlpha = opacity;
           ctx.beginPath();
-          ctx.arc(star.x * rect.width, star.y * rect.height, star.size, 0, Math.PI * 2);
+          ctx.arc(star.x * width, star.y * height, star.size, 0, Math.PI * 2);
           ctx.fill();
       });
       ctx.globalAlpha = 1.0;
@@ -103,9 +110,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       }
 
       // Drawing Constants
-      const trackY = rect.height / 2;
+      const trackY = height / 2;
       const speed = 200; // pixels per second moving left
-      const playheadX = rect.width / 2; // Playhead in CENTER for more dramatic effect
+      const playheadX = width / 2; // Playhead in CENTER for more dramatic effect
 
       // Enable additive blending for "glow" look
       ctx.globalCompositeOperation = 'lighter';
@@ -118,7 +125,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
             const width = Math.max(event.duration * speed - 2, 2);
             
             // Optimization: Only draw if on screen
-            if (x + width > -100 && x < rect.width + 100) {
+            if (x + width > -100 && x < window.innerWidth + 100) {
                 const isActive = currentTime >= event.startTime && currentTime <= (event.startTime + event.duration);
                 
                 // Color logic
@@ -192,7 +199,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       ctx.shadowBlur = 0; // Reset shadow for line
       
       // Beautiful gradient playhead
-      const lineGrad = ctx.createLinearGradient(0, 0, 0, rect.height);
+      const lineGrad = ctx.createLinearGradient(0, 0, 0, height);
       lineGrad.addColorStop(0, 'rgba(255,255,255,0)');
       lineGrad.addColorStop(0.5, theme.primaryColor);
       lineGrad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -201,7 +208,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(playheadX, 0);
-      ctx.lineTo(playheadX, rect.height);
+      ctx.lineTo(playheadX, height);
       ctx.stroke();
 
       requestRef.current = requestAnimationFrame(render);
@@ -210,6 +217,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
     requestRef.current = requestAnimationFrame(render);
 
     return () => {
+      window.removeEventListener('resize', updateSize);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
   }, [isPlaying, events, theme, audioCtxRef, startTimeRef]);
@@ -261,9 +269,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // 전체 화면 기준이므로 clientX/Y를 그대로 사용
+    const x = e.clientX;
+    const y = e.clientY;
 
     const last = lastCursorPosRef.current;
     if (last) {
@@ -282,14 +290,14 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
 
   return (
     <div
-      className="w-full relative shadow-[0_0_60px_rgba(15,23,42,0.9)] z-0 rounded-b-3xl overflow-hidden"
+      className="fixed inset-0 w-full h-full shadow-[0_0_60px_rgba(15,23,42,0.9)] z-0 overflow-hidden"
       onMouseMove={handleMouseMove}
     >
         {/* Vignette Overlay for cinematic feel */}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-10"></div>
         <canvas 
         ref={canvasRef} 
-        className="w-full h-80 bg-[#020617] block"
+        className="w-full h-full bg-[#020617] block"
         style={{ touchAction: 'none' }}
         />
     </div>
