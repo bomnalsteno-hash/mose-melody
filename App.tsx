@@ -281,23 +281,35 @@ const App: React.FC = () => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={`Write something... Your words will become music.\n(Try: 'I love you' or '오늘 밤하늘이 참 아름답네요')`}
-            className="relative w-full h-40 bg-slate-900/80 backdrop-blur-xl text-white p-6 rounded-xl focus:outline-none resize-none shadow-2xl border border-white/10 placeholder-slate-400 text-lg leading-relaxed"
+            className="relative w-full h-40 bg-slate-900/80 backdrop-blur-xl text-white p-6 rounded-2xl focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-lg leading-relaxed tracking-wide"
             style={{ fontFamily: `'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` }}
             disabled={isPlaying}
           />
 
-          {/* Playback text highlight */}
-          {isPlaying && inputText && (
-            <div className="mt-3 text-xs font-mono text-slate-400">
-              <span className="text-slate-500">
-                {inputText.slice(0, highlightIndex)}
-              </span>
-              <span className="text-sky-300 underline decoration-sky-400 decoration-2">
-                {inputText[highlightIndex]}
-              </span>
-              <span className="text-slate-600">
-                {inputText.slice(highlightIndex + 1)}
-              </span>
+          {/* Playback text highlight - karaoke style */}
+          {inputText && (
+            <div className="mt-5 flex justify-center">
+              <div className="relative px-5 py-3 rounded-full bg-slate-900/70 border border-white/10 backdrop-blur-xl shadow-[0_0_35px_rgba(56,189,248,0.35)] max-w-full overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 via-purple-500/10 to-pink-500/20 opacity-60 mix-blend-screen pointer-events-none" />
+                <p className="relative text-sm font-mono whitespace-pre-wrap text-center">
+                  <span className="text-slate-500">
+                    {isPlaying ? inputText.slice(0, highlightIndex) : ''}
+                  </span>
+                  {isPlaying && (
+                    <>
+                      <span className="text-sky-300 font-bold drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]">
+                        {inputText[highlightIndex]}
+                      </span>
+                      <span className="inline-block w-[2px] h-4 bg-sky-300/80 align-middle ml-0.5 animate-pulse rounded-full" />
+                    </>
+                  )}
+                  <span className="text-slate-600">
+                    {isPlaying
+                      ? inputText.slice(highlightIndex + 1)
+                      : inputText}
+                  </span>
+                </p>
+              </div>
             </div>
           )}
         </div>

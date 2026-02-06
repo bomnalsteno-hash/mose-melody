@@ -35,6 +35,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
   const particlesRef = useRef<Particle[]>([]);
   const starsRef = useRef<Star[]>([]);
   const lastActiveEventIndex = useRef<number>(-1);
+  const lastCursorPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize Stars once
   useEffect(() => {
@@ -179,52 +180,76 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
   }, [isPlaying, events, theme, audioCtxRef, startTimeRef]);
 
   // Particle Logic
-  const spawnParticles = (x: number, y: number, color: string, glowColor: string) => {
-      const count = 8;
-      for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = Math.random() * 3 + 1;
-          particlesRef.current.push({
-              x: x,
-              y: y,
-              vx: Math.cos(angle) * speed,
-              vy: Math.sin(angle) * speed,
-              life: 1.0,
-              maxLife: 1.0,
-              size: Math.random() * 3 + 1,
-              color: color
-          });
-      }
+  const spawnParticles = (x: number, y: number, color: string, glowColor: string, count: number = 8) => {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 3 + 1;
+      particlesRef.current.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1.0,
+        maxLife: 1.0,
+        size: Math.random() * 3 + 1,
+        color,
+      });
+    }
   };
 
   const updateAndDrawParticles = (ctx: CanvasRenderingContext2D, theme: ThemeConfig) => {
-      ctx.globalCompositeOperation = 'lighter'; // Additive blending
-      
-      for (let i = particlesRef.current.length - 1; i >= 0; i--) {
-          const p = particlesRef.current[i];
-          p.x += p.vx;
-          p.y += p.vy;
-          p.life -= 0.02; // Decay
-          
-          if (p.life <= 0) {
-              particlesRef.current.splice(i, 1);
-              continue;
-          }
+    ctx.globalCompositeOperation = 'lighter'; // Additive blending
 
-          ctx.fillStyle = p.color;
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = theme.primaryColor;
-          ctx.globalAlpha = p.life;
-          
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fill();
+    for (let i = particlesRef.current.length - 1; i >= 0; i--) {
+      const p = particlesRef.current[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.02; // Decay
+
+      if (p.life <= 0) {
+        particlesRef.current.splice(i, 1);
+        continue;
       }
-      ctx.globalAlpha = 1.0;
+
+      ctx.fillStyle = p.color;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = theme.primaryColor;
+      ctx.globalAlpha = p.life;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const last = lastCursorPosRef.current;
+    if (last) {
+      const dx = x - last.x;
+      const dy = y - last.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < 20 * 20) {
+        lastCursorPosRef.current = { x, y };
+        return;
+      }
+    }
+    lastCursorPosRef.current = { x, y };
+
+    spawnParticles(x, y, theme.secondaryColor, theme.primaryColor, 10);
   };
 
   return (
-    <div className="w-full relative shadow-[0_0_50px_rgba(0,0,0,0.5)] z-0">
+    <div
+      className="w-full relative shadow-[0_0_60px_rgba(15,23,42,0.9)] z-0 rounded-b-3xl overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
         {/* Vignette Overlay for cinematic feel */}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-10"></div>
         <canvas 
