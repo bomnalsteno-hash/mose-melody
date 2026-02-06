@@ -135,13 +135,13 @@ const App: React.FC = () => {
     setInputText(v);
   };
 
-  // Strict Mode 이중 마운트 시 ref에 보관한 값 복원 (한글 입력 유지)
+  // Strict Mode 이중 마운트 시에만 복원 (매 렌더마다 덮어쓰면 한 글자씩만 보이는 버그 방지)
   useEffect(() => {
     if (!inputRef.current) return;
-    if (inputValueRef.current !== inputRef.current.value) {
+    if (inputRef.current.value === '' && inputValueRef.current !== '') {
       inputRef.current.value = inputValueRef.current;
     }
-  });
+  }, []);
 
   // Initialize events when text changes (preview mode)
   useEffect(() => {
