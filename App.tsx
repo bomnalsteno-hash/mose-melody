@@ -24,7 +24,6 @@ const App: React.FC = () => {
   const totalDurationRef = useRef<number>(0);
   const [playbackProgress, setPlaybackProgress] = useState(0); // 0~1 사이 진척도
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const isComposingRef = useRef(false);
 
   // 미리 정의된 스케일 프리셋
   const scalePresets: Record<string, number[]> = {
@@ -225,14 +224,8 @@ const App: React.FC = () => {
         <textarea
           ref={inputRef}
           value={inputText}
-          onCompositionStart={() => { isComposingRef.current = true; }}
-          onCompositionEnd={(e) => {
-            isComposingRef.current = false;
-            setInputText(e.currentTarget.value);
-          }}
-          onChange={(e) => {
-            if (!isComposingRef.current) setInputText(e.target.value);
-          }}
+          onChange={(e) => setInputText(e.target.value)}
+          onCompositionEnd={(e) => setInputText(e.currentTarget.value)}
           placeholder="Write something..."
           rows={1}
           className="relative w-full h-10 md:h-11 py-2 px-3 rounded-lg bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-sm leading-snug tracking-wide"
