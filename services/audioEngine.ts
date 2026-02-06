@@ -135,20 +135,43 @@ export class AudioEngine {
     const unitTime = this.DOT_TIME / theme.tempoMultiplier;
     let currentTime = 0;
 
-    // Helper to get frequency from scale - 더 다양하게 만들기 위해 위치와 텍스트 해시 사용
+    // Helper to get frequency from scale - 더 다이나믹하게 만들기
     let charIndex = 0;
+    let noteSequence = 0; // 음표 순서로 패턴 생성
     const getFrequency = (char: string) => {
         const charCode = char.charCodeAt(0);
         const pos = charIndex++;
-        // 텍스트 길이와 위치를 조합해서 더 다양한 패턴
-        const hash = (charCode * 17 + pos * 31 + text.length * 7) % 1000;
-        // 여러 스케일 인덱스를 순환하면서도 랜덤성 추가
-        const scaleIndex = (hash + pos) % theme.scale.length;
+        noteSequence++;
+        
+        // 여러 요소를 조합한 해시로 더 복잡한 패턴
+        const hash1 = (charCode * 17 + pos * 31) % 1000;
+        const hash2 = (text.length * 7 + noteSequence * 13) % 1000;
+        const combinedHash = (hash1 + hash2) % 1000;
+        
+        // 스케일 인덱스를 더 다양하게 선택 (위치 기반 + 해시 기반)
+        const baseIndex = pos % theme.scale.length;
+        const hashIndex = combinedHash % theme.scale.length;
+        const scaleIndex = (baseIndex + hashIndex) % theme.scale.length;
         const semitoneOffset = theme.scale[scaleIndex];
-        // 옥타브 변화도 추가 (가끔 한 옥타브 위/아래)
-        const octaveShift = (hash % 7 === 0) ? (hash % 3 === 0 ? 12 : -12) : 0;
+        
+        // 옥타브 변화를 더 자주 발생 (약 30% 확률)
+        let octaveShift = 0;
+        if (combinedHash % 3 === 0) {
+          // 위/아래 옥타브 또는 2옥타브 위
+          const shiftType = combinedHash % 5;
+          if (shiftType === 0) octaveShift = 12;      // 한 옥타브 위
+          else if (shiftType === 1) octaveShift = -12; // 한 옥타브 아래
+          else if (shiftType === 2) octaveShift = 24;  // 두 옥타브 위 (드물게)
+        }
+        
+        // 추가로 반음 단위 미세 조정 (약 15% 확률로 ±1~3 반음)
+        let fineTune = 0;
+        if (combinedHash % 7 === 0) {
+          fineTune = ((combinedHash % 7) - 3); // -3 ~ +3 반음
+        }
+        
         // fn = f0 * (a)^n where a is 2^(1/12)
-        return theme.baseFrequency * Math.pow(2, (semitoneOffset + octaveShift) / 12);
+        return theme.baseFrequency * Math.pow(2, (semitoneOffset + octaveShift + fineTune) / 12);
     };
 
     // Reconstruct simplified flow

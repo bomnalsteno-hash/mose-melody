@@ -24,9 +24,9 @@ const CursorTrail: React.FC = () => {
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      // 로직 좌표계를 CSS 픽셀과 동일하게 맞추고 고해상도만 스케일로 처리
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     };
@@ -35,9 +35,10 @@ const CursorTrail: React.FC = () => {
     window.addEventListener('resize', resize);
 
     const handleMove = (e: MouseEvent) => {
-      // 전체 화면 기준 좌표 그대로 사용해서 커서와 정확히 맞춤
-      const x = e.clientX;
-      const y = e.clientY;
+      // 캔버스의 실제 위치를 기준으로 마우스 좌표 변환
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
       const last = lastMousePosRef.current;
       if (last) {
