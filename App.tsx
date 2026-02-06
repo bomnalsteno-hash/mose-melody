@@ -224,8 +224,13 @@ const App: React.FC = () => {
         <textarea
           ref={inputRef}
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
           onCompositionEnd={(e) => setInputText(e.currentTarget.value)}
+          onChange={(e) => {
+            const el = e.target;
+            requestAnimationFrame(() => {
+              if (el && document.body.contains(el)) setInputText((el as HTMLTextAreaElement).value);
+            });
+          }}
           placeholder="Write something..."
           rows={1}
           className="relative w-full h-10 md:h-11 py-2 px-3 rounded-lg bg-slate-900/80 backdrop-blur-xl text-white focus:outline-none resize-none shadow-[0_0_40px_rgba(56,189,248,0.35)] border border-white/10 placeholder-slate-400 text-sm leading-snug tracking-wide"
