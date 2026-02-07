@@ -133,9 +133,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         ? rightHalf / totalDuration
         : baseSpeed;
       const playheadX = width / 2; // Playhead in CENTER
-      // 모스 트랙: 너무 위로 올리지 않고, 잘리지만 않으면 됨 (하단 패널 위쪽에 배치)
-      const trackY = height * 0.38;
-      const labelY = height * 0.38;
+      // 모스 트랙: 조금 더 낮게 (잘리지만 않게)
+      const trackY = height * 0.44;
+      const labelY = height * 0.44;
       const labelRadius = Math.min(64, height * 0.16);
       const labelFontSize = Math.min(36, Math.max(20, height * 0.11));
 
@@ -175,16 +175,20 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                // 점: 작은 네모, 선(대시): 확실히 큰 네모 + 가로로 길쭉하게
+                // 점: 동그란 점(원). 선(대시): 가로로 길쭉한 막대(낮은 높이).
                 const isDash = event.symbol === MorseSymbol.DASH;
-                const noteHeight = isDash
-                  ? Math.max(24, height * 0.1)
-                  : Math.max(14, height * 0.055);
-                const y = trackY - noteHeight / 2;
-                
-                ctx.beginPath();
-                ctx.roundRect(x, y, noteWidth, noteHeight, 8);
-                ctx.fill();
+                if (isDash) {
+                  const barHeight = Math.max(12, height * 0.04);
+                  const y = trackY - barHeight / 2;
+                  ctx.beginPath();
+                  ctx.roundRect(x, y, noteWidth, barHeight, 6);
+                  ctx.fill();
+                } else {
+                  const radius = Math.min(noteWidth / 2, height * 0.028, 14);
+                  ctx.beginPath();
+                  ctx.arc(x + noteWidth / 2, trackY, radius, 0, Math.PI * 2);
+                  ctx.fill();
+                }
 
                 // Trigger Particles on Note Start
                 if (isActive && index !== lastActiveEventIndex.current) {
