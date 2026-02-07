@@ -304,35 +304,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* 악기 선택 */}
-      <section className="text-xs font-mono text-slate-300">
-        <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md">
-          <p className="text-[10px] md:text-xs text-slate-400 mb-2 uppercase tracking-wide">Instrument</p>
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
-            {(['piano', 'marimba', 'violin', 'castanets', 'sine'] as InstrumentType[]).map((inst) => {
-              const isSelected = selectedInstrument === inst;
-              return (
-                <button
-                  key={inst}
-                  type="button"
-                  className={`
-                    px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border text-[10px] md:text-xs font-medium
-                    transition-all duration-200 hover:scale-105 active:scale-95
-                    ${isSelected
-                      ? 'bg-sky-500/50 border-sky-400 ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-900 text-white'
-                      : 'bg-white/5 border-white/20 text-slate-400 hover:bg-white/10 hover:text-slate-300'
-                    }
-                  `}
-                  onClick={() => setSelectedInstrument(inst)}
-                >
-                  {inst === 'sine' ? 'Sine' : inst.charAt(0).toUpperCase() + inst.slice(1)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       <div className="flex justify-center">
         <button
           onClick={handlePlay}
@@ -405,7 +376,7 @@ const App: React.FC = () => {
                   <span className="text-[8px] font-mono uppercase text-slate-400 tracking-widest">{isAutoTheme ? 'Auto Mood' : 'Custom Mood'}</span>
                   <span className="text-lg font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" style={{ color: theme.primaryColor }}>{theme.mood}</span>
                   <div className="flex gap-1 text-[8px] text-slate-400 font-mono mt-1 uppercase tracking-wide">
-                    <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.waveform}</span>
+                    <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.instrument ?? 'sine'}</span>
                     <span className="bg-white/10 px-1.5 py-0.5 rounded">{theme.baseFrequency}Hz</span>
                   </div>
                 </div>
@@ -432,7 +403,7 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-mono uppercase text-slate-400 tracking-widest">{isAutoTheme ? 'Auto Mood' : 'Custom Mood'}</span>
                 <span className="text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" style={{ color: theme.primaryColor }}>{theme.mood}</span>
                 <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-2 uppercase tracking-wide">
-                  <span className="bg-white/10 px-2 py-1 rounded">{theme.waveform}</span>
+                  <span className="bg-white/10 px-2 py-1 rounded">{theme.instrument ?? 'sine'}</span>
                   <span className="bg-white/10 px-2 py-1 rounded">{theme.baseFrequency}Hz</span>
                 </div>
               </div>

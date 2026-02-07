@@ -118,8 +118,6 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
          currentTime = audioCtxRef.current.currentTime - startTimeRef.current - 0.1; 
       }
 
-      // 비주얼라이저 정중앙: height 비율로 좌표 계산 (고정 픽셀 대신)
-      const centerY = height / 2;
       const baseSpeed = 200; // pixels per second
       // 데스크톱 큰 화면: 타임라인 전체가 보이도록 스케일 (잘림 방지). 모바일은 baseSpeed 유지.
       let totalDuration = 0;
@@ -135,12 +133,11 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         ? rightHalf / totalDuration
         : baseSpeed;
       const playheadX = width / 2; // Playhead in CENTER
-      // 라벨·트랙 모두 height 비율로 → 작은 창에서도 중앙 부근에 유지
-      const labelRadius = Math.min(80, height * 0.25);
-      const trackOffsetFromCenter = height * 0.12; // 예: 60px 대신 ~12% 높이
-      const labelY = centerY; // 문자 정확히 중앙
-      const trackY = centerY + trackOffsetFromCenter; // 모스 타임라인은 중앙 아래(비율)
-      const labelFontSize = Math.min(40, Math.max(20, height * 0.12));
+      // 모스 트랙·라벨을 상단에 배치 → 하단 패널에 가려지지 않게 (가로형 -. -..)
+      const trackY = height * 0.22; // 상단 22% 지점
+      const labelY = height * 0.22;
+      const labelRadius = Math.min(56, height * 0.14);
+      const labelFontSize = Math.min(32, Math.max(18, height * 0.1));
 
       // Enable additive blending for "glow" look
       ctx.globalCompositeOperation = 'lighter';
@@ -178,9 +175,8 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                const noteHeight = event.symbol === MorseSymbol.DASH
-                  ? Math.max(16, height * 0.12)
-                  : Math.max(8, height * 0.05);
+                // 가로형: 높이는 낮게, 너비로 점(짧은 막대) vs 선(긴 막대) 구분
+                const noteHeight = Math.max(10, height * 0.032);
                 const y = trackY - noteHeight / 2;
                 
                 ctx.beginPath();
@@ -199,7 +195,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       // 4. Draw Particles
       updateAndDrawParticles(ctx, theme);
 
-      // 5. Draw current character label (정확히 비주얼라이저 세로 중앙)
+      // 5. Draw current character label (트랙과 같은 높이)
       const activeIndex = lastActiveEventIndex.current;
       if (activeIndex >= 0 && activeIndex < events.length) {
         const active = events[activeIndex];
