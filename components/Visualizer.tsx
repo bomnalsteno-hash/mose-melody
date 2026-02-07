@@ -175,16 +175,14 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                // 점: 동그란 점(원). 선(대시): 가로로 길쭉한 막대(낮은 높이).
+                // 점: 동그란 점(원). 선(대시): 가로로 길쭉한 막대(낮은 높이). roundRect 미지원 브라우저 대응.
                 const isDash = event.symbol === MorseSymbol.DASH;
                 if (isDash) {
                   const barHeight = Math.max(12, height * 0.04);
                   const y = trackY - barHeight / 2;
-                  ctx.beginPath();
-                  ctx.roundRect(x, y, noteWidth, barHeight, 6);
-                  ctx.fill();
+                  ctx.fillRect(x, y, noteWidth, barHeight);
                 } else {
-                  const radius = Math.min(noteWidth / 2, height * 0.028, 14);
+                  const radius = Math.max(2, Math.min(noteWidth / 2, height * 0.028, 14));
                   ctx.beginPath();
                   ctx.arc(x + noteWidth / 2, trackY, radius, 0, Math.PI * 2);
                   ctx.fill();
