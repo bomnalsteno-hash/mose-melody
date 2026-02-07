@@ -11,8 +11,8 @@ export class AudioEngine {
   private delayNode: DelayNode | null = null;
   private feedbackGain: GainNode | null = null;
 
-  // Drone Oscillators
   private padOscillators: OscillatorNode[] = [];
+  private padArpeggioIntervalId: number | null = null;
 
   private events: PlaybackEvent[] = [];
   private isPlaying: boolean = false;
@@ -51,58 +51,68 @@ export class AudioEngine {
     }
   }
 
-  // Generate a rich ambient drone based on the theme
+  // 반주: 스케일 기반 느린 아르페지오 — 노이즈가 아닌 작곡된 선율
   private startDrone(theme: ThemeConfig) {
     if (!this.audioCtx || !this.padGain) return;
 
-    // Stop existing pads if any
     this.stopDrone();
 
-    const baseFreq = theme.baseFrequency / 2;
+    const scale = theme.scale && theme.scale.length > 0 ? theme.scale : [0, 2, 4, 7, 9];
+    const baseFreq = theme.baseFrequency * 0.5;
+    const arpeggioSemitones = [scale[0], scale[1], scale[2], scale[0] + 12, scale[2], scale[1]];
+    let step = 0;
 
-    const scale = theme.scale && theme.scale.length > 0 ? theme.scale : [0, 4, 7];
-    const pickIndex = () => Math.floor(Math.random() * scale.length);
-    const idx1 = pickIndex();
-    const idx2 = (idx1 + 1) % scale.length;
-    const idx3 = (idx1 + 2) % scale.length;
+    const playPadNote = () => {
+      if (!this.audioCtx || !this.padGain) return;
+      const semitone = arpeggioSemitones[step % arpeggioSemitones.length];
+      const freq = baseFreq * Math.pow(2, semitone / 12);
+      step += 1;
 
-    const offsets = [scale[idx1] - 12, scale[idx2] - 12, scale[idx3] - 12];
-    const freqs = offsets.map(semitone => baseFreq * Math.pow(2, semitone / 12));
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(this.padGain);
+
+      const now = this.audioCtx.currentTime;
+      const attack = 0.5;
+      const release = 1.6;
+      const duration = 2.2;
+
+      osc.start(now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + attack);
+      gain.gain.setValueAtTime(0.16, now + duration - release);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.stop(now + duration + 0.1);
+
+      this.padOscillators.push(osc);
+    };
 
     const now = this.audioCtx.currentTime;
-
-    const filter = this.audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(520, now);
-    filter.Q.value = 0.3;
-    filter.connect(this.padGain);
-
-    freqs.forEach(f => {
-      const osc = this.audioCtx!.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = f;
-      osc.connect(filter);
-      osc.start(now);
-      this.padOscillators.push(osc);
-    });
-
     this.padGain.gain.setValueAtTime(0, now);
-    this.padGain.gain.linearRampToValueAtTime(0.08, now + 2.0);
+    this.padGain.gain.linearRampToValueAtTime(0.45, now + 1.5);
+
+    playPadNote();
+    this.padArpeggioIntervalId = window.setInterval(playPadNote, 2200);
   }
 
   private stopDrone() {
-    if (this.audioCtx && this.padGain) {
-         const now = this.audioCtx.currentTime;
-         // Fade out
-         this.padGain.gain.cancelScheduledValues(now);
-         this.padGain.gain.setValueAtTime(this.padGain.gain.value, now);
-         this.padGain.gain.linearRampToValueAtTime(0, now + 2.0);
+    if (this.padArpeggioIntervalId !== null) {
+      clearInterval(this.padArpeggioIntervalId);
+      this.padArpeggioIntervalId = null;
     }
-
+    if (this.audioCtx && this.padGain) {
+      const now = this.audioCtx.currentTime;
+      this.padGain.gain.cancelScheduledValues(now);
+      this.padGain.gain.setValueAtTime(this.padGain.gain.value, now);
+      this.padGain.gain.linearRampToValueAtTime(0, now + 2.0);
+    }
     this.padOscillators.forEach(osc => {
-        try {
-            osc.stop(this.audioCtx!.currentTime + 2.1);
-        } catch(e) {}
+      try {
+        osc.stop(this.audioCtx!.currentTime + 0.1);
+      } catch (_) {}
     });
     this.padOscillators = [];
   }
