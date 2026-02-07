@@ -118,22 +118,13 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
          currentTime = audioCtxRef.current.currentTime - startTimeRef.current - 0.1; 
       }
 
-      const baseSpeed = 260; // pixels per second — 점/선이 더 길쭉하게 보이도록
-      // 데스크톱 큰 화면: 타임라인 전체가 보이도록 스케일 (잘림 방지)
-      let totalDuration = 0;
-      events.forEach((ev) => {
-        if (ev.type === 'note') {
-          const end = ev.startTime + ev.duration;
-          if (end > totalDuration) totalDuration = end;
-        }
-      });
-      // 플레이헤드 오른쪽 절반만 사용 → 큰 창에서도 모스 블록이 잘리지 않도록
-      const rightHalf = width * 0.48;
-      const speed = totalDuration > 0 && rightHalf > 0 && baseSpeed * totalDuration > rightHalf
-        ? rightHalf / totalDuration
-        : baseSpeed;
-      const playheadX = width / 2; // Playhead in CENTER
-      // 모스 트랙: 조금 더 낮게 (잘리지만 않게)
+      // 창 크기와 무관하게 고정 — 모스 크기가 창에 따라 안 바뀜
+      const speed = 220; // 고정 px/s
+      const GAP_PX = 14; // 심볼 사이 간격 (겹침 방지)
+      const BAR_HEIGHT = 10; // 대시 높이 (길쭉한 선)
+      const DOT_RADIUS = 8; // 점 반지름 고정
+
+      const playheadX = width / 2;
       const trackY = height * 0.44;
       const labelY = height * 0.44;
       const labelRadius = Math.min(64, height * 0.16);
@@ -153,19 +144,14 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         }
       });
 
-      // 3. Draw Timeline (Notes)
+      // 3. Draw Timeline (Notes) — 고정 크기, 간격 확보, 대시는 둥근 선
       events.forEach((event, index) => {
         if (event.type === 'note') {
             const relativeTime = event.startTime - currentTime;
             const x = playheadX + (relativeTime * speed);
             const isDash = event.symbol === MorseSymbol.DASH;
-            // 대시: 가로로 훨씬 길게 (옆으로 누인 느낌). 점은 기존 비율.
-            const baseWidth = event.duration * speed - 2;
-            const noteWidth = isDash
-              ? Math.max(baseWidth * 1.85, 12)
-              : Math.max(baseWidth, 4);
+            const noteWidth = Math.max(event.duration * speed - GAP_PX, isDash ? 24 : 6);
 
-            // Optimization: Only draw if on screen
             const rect = canvas.getBoundingClientRect();
             if (x + noteWidth > -100 && x < rect.width + 100) {
                 const isActive = currentTime >= event.startTime && currentTime <= (event.startTime + event.duration);
@@ -180,19 +166,25 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                // 점: 동그란 점(원, 살짝 키움). 선(대시): 가로로 길쭉한 막대.
                 if (isDash) {
-                  const barHeight = Math.max(12, height * 0.04);
-                  const y = trackY - barHeight / 2;
-                  ctx.fillRect(x, y, noteWidth, barHeight);
+                  const r = BAR_HEIGHT / 2;
+                  if (noteWidth <= BAR_HEIGHT) {
+                    ctx.beginPath();
+                    ctx.arc(x + noteWidth / 2, trackY, r, 0, Math.PI * 2);
+                    ctx.fill();
+                  } else {
+                    ctx.beginPath();
+                    ctx.arc(x + r, trackY, r, -Math.PI / 2, Math.PI / 2);
+                    ctx.arc(x + noteWidth - r, trackY, r, Math.PI / 2, Math.PI * 1.5);
+                    ctx.closePath();
+                    ctx.fill();
+                  }
                 } else {
-                  const radius = Math.max(3, Math.min(noteWidth / 2, height * 0.034, 17));
                   ctx.beginPath();
-                  ctx.arc(x + noteWidth / 2, trackY, radius, 0, Math.PI * 2);
+                  ctx.arc(x + noteWidth / 2, trackY, DOT_RADIUS, 0, Math.PI * 2);
                   ctx.fill();
                 }
 
-                // Trigger Particles on Note Start
                 if (isActive && index !== lastActiveEventIndex.current) {
                     lastActiveEventIndex.current = index;
                     spawnParticles(playheadX, trackY, theme.secondaryColor, theme.primaryColor);
