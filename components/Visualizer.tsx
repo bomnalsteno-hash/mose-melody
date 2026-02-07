@@ -118,8 +118,8 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
          currentTime = audioCtxRef.current.currentTime - startTimeRef.current - 0.1; 
       }
 
-      const baseSpeed = 200; // pixels per second
-      // 데스크톱 큰 화면: 타임라인 전체가 보이도록 스케일 (잘림 방지). 모바일은 baseSpeed 유지.
+      const baseSpeed = 260; // pixels per second — 점/선이 더 길쭉하게 보이도록
+      // 데스크톱 큰 화면: 타임라인 전체가 보이도록 스케일 (잘림 방지)
       let totalDuration = 0;
       events.forEach((ev) => {
         if (ev.type === 'note') {
@@ -133,11 +133,11 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         ? rightHalf / totalDuration
         : baseSpeed;
       const playheadX = width / 2; // Playhead in CENTER
-      // 모스 트랙·라벨을 상단에 배치 → 하단 패널에 가려지지 않게 (가로형 -. -..)
-      const trackY = height * 0.22; // 상단 22% 지점
-      const labelY = height * 0.22;
-      const labelRadius = Math.min(56, height * 0.14);
-      const labelFontSize = Math.min(32, Math.max(18, height * 0.1));
+      // 모스 트랙: 너무 위로 올리지 않고, 잘리지만 않으면 됨 (하단 패널 위쪽에 배치)
+      const trackY = height * 0.38;
+      const labelY = height * 0.38;
+      const labelRadius = Math.min(64, height * 0.16);
+      const labelFontSize = Math.min(36, Math.max(20, height * 0.11));
 
       // Enable additive blending for "glow" look
       ctx.globalCompositeOperation = 'lighter';
@@ -158,7 +158,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         if (event.type === 'note') {
             const relativeTime = event.startTime - currentTime;
             const x = playheadX + (relativeTime * speed);
-            const noteWidth = Math.max(event.duration * speed - 2, 2);
+            const noteWidth = Math.max(event.duration * speed - 2, 4);
             
             // Optimization: Only draw if on screen
             const rect = canvas.getBoundingClientRect();
@@ -175,8 +175,11 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                // 가로형: 높이는 낮게, 너비로 점(짧은 막대) vs 선(긴 막대) 구분
-                const noteHeight = Math.max(10, height * 0.032);
+                // 점: 작은 네모, 선(대시): 확실히 큰 네모 + 가로로 길쭉하게
+                const isDash = event.symbol === MorseSymbol.DASH;
+                const noteHeight = isDash
+                  ? Math.max(24, height * 0.1)
+                  : Math.max(14, height * 0.055);
                 const y = trackY - noteHeight / 2;
                 
                 ctx.beginPath();

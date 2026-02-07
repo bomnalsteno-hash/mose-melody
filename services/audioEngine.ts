@@ -18,8 +18,8 @@ export class AudioEngine {
   private isPlaying: boolean = false;
   private timerID: number | null = null;
   
-  // Timing constants (in seconds) — 점·선 구분이 확실하도록
-  private readonly DOT_TIME = 0.12; 
+  // Timing constants (in seconds) — 점·선 구분 + 음이 더 길쭉하게
+  private readonly DOT_TIME = 0.16; 
 
   constructor() {}
 
@@ -41,11 +41,11 @@ export class AudioEngine {
       // 반주(패드)는 멜로디보다 한참 작게
       this.padGain.gain.value = 0.18;
 
-      // Delay Effect (Echo)
+      // Delay Effect (Echo) — 모스가 잘 들리도록 에코 약하게
       this.delayNode = this.audioCtx.createDelay();
-      this.delayNode.delayTime.value = 0.35; // 350ms delay
+      this.delayNode.delayTime.value = 0.2; // 200ms
       this.feedbackGain = this.audioCtx.createGain();
-      this.feedbackGain.gain.value = 0.4; // 40% feedback
+      this.feedbackGain.gain.value = 0.12; // 12% feedback
 
       // Routing: Melody -> Delay -> Feedback -> Delay
       //          Melody -> Master
