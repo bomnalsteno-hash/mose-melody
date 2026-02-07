@@ -19,7 +19,7 @@ export interface PlaybackEvent {
   char?: string;
 }
 
-export type InstrumentType = 'sine' | 'piano' | 'marimba' | 'violin' | 'castanets';
+export type InstrumentType = 'sine' | 'piano' | 'marimba' | 'violin' | 'chime';
 
 export interface ThemeConfig {
   mood: string;

@@ -18,8 +18,8 @@ export class AudioEngine {
   private isPlaying: boolean = false;
   private timerID: number | null = null;
   
-  // Timing constants (in seconds) — 점·선 구분 + 음이 더 길쭉하게
-  private readonly DOT_TIME = 0.16; 
+  // Timing constants (in seconds) — 전체 템포 아주 조금 빠르게
+  private readonly DOT_TIME = 0.14; 
 
   constructor() {}
 
@@ -38,8 +38,7 @@ export class AudioEngine {
 
       // Bus for Pad (Accompaniment)
       this.padGain = this.audioCtx.createGain();
-      // 반주(패드)는 멜로디보다 한참 작게
-      this.padGain.gain.value = 0.18;
+      this.padGain.gain.value = 0.1;
 
       // 멜로디는 에코 없이 직통만 → 두 번 들리는 현상 제거, 모스가 정확히 들리도록
       this.melodyGain.connect(this.masterGain);
@@ -59,9 +58,8 @@ export class AudioEngine {
     // Stop existing pads if any
     this.stopDrone();
 
-    const baseFreq = theme.baseFrequency / 2; // Lower octave for bass/pad
+    const baseFreq = theme.baseFrequency / 2;
 
-    // 테마 스케일 기반으로 코드 톤을 뽑아서 매 재생마다 약간씩 다른 느낌
     const scale = theme.scale && theme.scale.length > 0 ? theme.scale : [0, 4, 7];
     const pickIndex = () => Math.floor(Math.random() * scale.length);
     const idx1 = pickIndex();
@@ -73,29 +71,23 @@ export class AudioEngine {
 
     const now = this.audioCtx.currentTime;
 
-    // Filter to make it warm and soft
     const filter = this.audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    // 느린 곡일수록 조금 더 어둡게
-    const baseCutoff = 700;
-    const tempoFactor = Math.min(Math.max(theme.tempoMultiplier, 0.5), 2);
-    filter.frequency.setValueAtTime(baseCutoff * tempoFactor, now);
-    filter.Q.value = 0.5;
+    filter.frequency.setValueAtTime(520, now);
+    filter.Q.value = 0.3;
     filter.connect(this.padGain);
 
     freqs.forEach(f => {
       const osc = this.audioCtx!.createOscillator();
-      // 테마 파형을 그대로 쓰되, 너무 공격적인 square는 약간 부드럽게
-      osc.type = theme.waveform === 'square' ? 'sawtooth' : theme.waveform;
+      osc.type = 'sine';
       osc.frequency.value = f;
       osc.connect(filter);
       osc.start(now);
       this.padOscillators.push(osc);
     });
 
-    // Fade in (더 작게 올라오도록)
     this.padGain.gain.setValueAtTime(0, now);
-    this.padGain.gain.linearRampToValueAtTime(0.14, now + 2.0);
+    this.padGain.gain.linearRampToValueAtTime(0.08, now + 2.0);
   }
 
   private stopDrone() {
@@ -312,25 +304,28 @@ export class AudioEngine {
       return;
     }
 
-    if (instrument === 'castanets') {
-      const bufSize = ctx.sampleRate * 0.04;
-      const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.2));
-      }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'highpass';
-      filter.frequency.value = 1500;
-      filter.Q.value = 1;
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.gain.setValueAtTime(0.5, noteStart);
-      gain.gain.linearRampToValueAtTime(0, noteStart + 0.03);
-      noise.start(noteStart);
-      noise.stop(noteStart + 0.04);
+    if (instrument === 'chime') {
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.value = freq;
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq * 2.5;
+      const harmGain = ctx.createGain();
+      harmGain.gain.value = 0.12;
+      osc1.connect(gain);
+      osc2.connect(harmGain);
+      harmGain.connect(gain);
+      const attack = 0.012;
+      const release = Math.min(event.duration * 0.5, 0.2);
+      gain.gain.setValueAtTime(0, noteStart);
+      gain.gain.linearRampToValueAtTime(0.55, noteStart + attack);
+      gain.gain.setValueAtTime(0.5, noteEnd - release);
+      gain.gain.linearRampToValueAtTime(0, noteEnd);
+      osc1.start(noteStart);
+      osc2.start(noteStart);
+      osc1.stop(noteEnd + 0.05);
+      osc2.stop(noteEnd + 0.05);
       return;
     }
 
