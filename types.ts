@@ -19,6 +19,8 @@ export interface PlaybackEvent {
   char?: string;
 }
 
+export type InstrumentType = 'sine' | 'piano' | 'marimba' | 'violin' | 'castanets';
+
 export interface ThemeConfig {
   mood: string;
   primaryColor: string; // Hex code for main glow
@@ -27,6 +29,7 @@ export interface ThemeConfig {
   baseFrequency: number;
   tempoMultiplier: number; // 1.0 is standard (~60ms dot)
   scale: number[]; // Array of frequency ratios or semitone offsets
+  instrument?: InstrumentType; // 악기 타임브러 (미지정 시 waveform 사용)
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
@@ -36,5 +39,6 @@ export const DEFAULT_THEME: ThemeConfig = {
   waveform: "sine",
   baseFrequency: 440,
   tempoMultiplier: 1.0,
-  scale: [0, 2, 4, 7, 9] // Major Pentatonic
+  scale: [0, 2, 4, 7, 9], // Major Pentatonic
+  instrument: 'piano',
 };

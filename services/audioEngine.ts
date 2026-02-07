@@ -1,4 +1,4 @@
-import { MorseSymbol, PlaybackEvent, ThemeConfig } from '../types';
+import { MorseSymbol, PlaybackEvent, ThemeConfig, InstrumentType } from '../types';
 import { textToMorse } from '../utils/morseMapping';
 
 export class AudioEngine {
@@ -18,8 +18,8 @@ export class AudioEngine {
   private isPlaying: boolean = false;
   private timerID: number | null = null;
   
-  // Timing constants (in seconds)
-  private readonly DOT_TIME = 0.08; 
+  // Timing constants (in seconds) — 점·선 구분이 확실하도록
+  private readonly DOT_TIME = 0.12; 
 
   constructor() {}
 
@@ -207,12 +207,12 @@ export class AudioEngine {
                     events.push({
                         type: 'note',
                         startTime: currentTime,
-                        duration: unitTime * 3,
+                        duration: unitTime * 4,
                         symbol: MorseSymbol.DASH,
                         frequency: freq,
                         char: char
                     });
-                    currentTime += unitTime * 3; // Note on
+                    currentTime += unitTime * 4; // Note on
                 }
 
                 // Inter-element gap (1 unit)
@@ -250,6 +250,118 @@ export class AudioEngine {
     return events;
   }
 
+  private playNoteWithInstrument(
+    ctx: AudioContext,
+    theme: ThemeConfig,
+    event: PlaybackEvent & { type: 'note'; frequency: number },
+    startTime: number,
+    instrument: InstrumentType
+  ) {
+    const gain = ctx.createGain();
+    gain.connect(this.melodyGain!);
+    const noteStart = startTime + event.startTime;
+    const noteEnd = noteStart + event.duration;
+    const freq = event.frequency;
+
+    if (instrument === 'piano') {
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'triangle';
+      osc1.frequency.value = freq;
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'triangle';
+      osc2.frequency.value = freq * 2;
+      const harmGain = ctx.createGain();
+      harmGain.gain.value = 0.25;
+      osc1.connect(gain);
+      osc2.connect(harmGain);
+      harmGain.connect(gain);
+      const attack = 0.008;
+      const decay = Math.min(event.duration * 0.4, 0.15);
+      gain.gain.setValueAtTime(0, noteStart);
+      gain.gain.linearRampToValueAtTime(0.6, noteStart + attack);
+      gain.gain.linearRampToValueAtTime(0.2, noteStart + attack + decay);
+      gain.gain.linearRampToValueAtTime(0, noteEnd);
+      osc1.start(noteStart);
+      osc2.start(noteStart);
+      osc1.stop(noteEnd + 0.05);
+      osc2.stop(noteEnd + 0.05);
+      return;
+    }
+
+    if (instrument === 'marimba') {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      const attack = 0.03;
+      const release = Math.min(event.duration * 1.2, 0.25);
+      gain.gain.setValueAtTime(0, noteStart);
+      gain.gain.linearRampToValueAtTime(0.65, noteStart + attack);
+      gain.gain.setValueAtTime(0.5, noteEnd - release);
+      gain.gain.linearRampToValueAtTime(0, noteEnd);
+      osc.start(noteStart);
+      osc.stop(noteEnd + 0.1);
+      return;
+    }
+
+    if (instrument === 'violin') {
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2000;
+      filter.Q.value = 0.5;
+      osc.connect(filter);
+      filter.connect(gain);
+      const attack = 0.05;
+      const release = 0.08;
+      gain.gain.setValueAtTime(0, noteStart);
+      gain.gain.linearRampToValueAtTime(0.4, noteStart + attack);
+      gain.gain.setValueAtTime(0.35, noteEnd - release);
+      gain.gain.linearRampToValueAtTime(0, noteEnd);
+      osc.start(noteStart);
+      osc.stop(noteEnd + 0.1);
+      return;
+    }
+
+    if (instrument === 'castanets') {
+      const bufSize = ctx.sampleRate * 0.04;
+      const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.2));
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 1500;
+      filter.Q.value = 1;
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.gain.setValueAtTime(0.5, noteStart);
+      gain.gain.linearRampToValueAtTime(0, noteStart + 0.03);
+      noise.start(noteStart);
+      noise.stop(noteStart + 0.04);
+      return;
+    }
+
+    // sine / default: 기존 단일 오실레이터
+    const osc = ctx.createOscillator();
+    osc.type = theme.waveform;
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    const attack = 0.02;
+    const release = 0.1;
+    gain.gain.setValueAtTime(0, noteStart);
+    gain.gain.linearRampToValueAtTime(0.7, noteStart + attack);
+    gain.gain.setValueAtTime(0.7, noteEnd - release);
+    gain.gain.linearRampToValueAtTime(0, noteEnd);
+    osc.start(noteStart);
+    osc.stop(noteEnd + 0.1);
+  }
+
   public async play(theme: ThemeConfig, onComplete: () => void) {
     this.initContext();
     if (!this.audioCtx || !this.melodyGain) return;
@@ -260,32 +372,10 @@ export class AudioEngine {
     // Start Ambient Drone
     this.startDrone(theme);
 
+    const instrument: InstrumentType = theme.instrument ?? 'sine';
     this.events.forEach(event => {
       if (event.type === 'note' && event.frequency) {
-        const osc = this.audioCtx!.createOscillator();
-        const gain = this.audioCtx!.createGain();
-        
-        osc.type = theme.waveform;
-        osc.frequency.value = event.frequency;
-        
-        // Envelope to avoid clicking
-        const attack = 0.02;
-        const release = 0.1; // Slightly longer release for dreamy feel
-        
-        osc.connect(gain);
-        gain.connect(this.melodyGain!);
-        
-        const noteStart = startTime + event.startTime;
-        const noteEnd = noteStart + event.duration;
-
-        osc.start(noteStart);
-        
-        gain.gain.setValueAtTime(0, noteStart);
-        gain.gain.linearRampToValueAtTime(0.7, noteStart + attack);
-        gain.gain.setValueAtTime(0.7, noteEnd - release);
-        gain.gain.linearRampToValueAtTime(0, noteEnd);
-        
-        osc.stop(noteEnd + 0.1); // Allow tail
+        this.playNoteWithInstrument(this.audioCtx!, theme, event, startTime, instrument);
       }
     });
 

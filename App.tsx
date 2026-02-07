@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AudioEngine } from './services/audioEngine';
 import Visualizer from './components/Visualizer';
-import { ThemeConfig, DEFAULT_THEME, PlaybackEvent } from './types';
+import { ThemeConfig, DEFAULT_THEME, PlaybackEvent, InstrumentType } from './types';
 import { Music, Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -15,7 +15,9 @@ const App: React.FC = () => {
   const [selectedBaseFreq, setSelectedBaseFreq] = useState<number | ''>('');
   const [selectedTempo, setSelectedTempo] = useState<number | ''>('');
   const [selectedScale, setSelectedScale] = useState<string>('');
-  
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const [selectedInstrument, setSelectedInstrument] = useState<InstrumentType>('piano');
+
   const audioEngineRef = useRef<AudioEngine>(new AudioEngine());
   
   // These refs are for the Visualizer to access raw audio timing without re-renders
@@ -25,6 +27,17 @@ const App: React.FC = () => {
   const [playbackProgress, setPlaybackProgress] = useState(0); // 0~1 사이 진척도
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const inputValueRef = useRef(''); // 한글 IME + Strict Mode 대응: ref에만 보관 후 마운트 시 복원
+
+  // 스타일 프리셋 정의 (선택 표시 + 시각적 구분 + 악기)
+  const stylePresets = [
+    { id: 'dreamy', label: 'Dreamy Night', mood: 'Dreamy', waveform: 'triangle' as OscillatorType, scale: 'dreamy', tempo: 0.9, baseFreq: 420, instrument: 'marimba' as InstrumentType, unselected: 'bg-violet-500/25 border-violet-400 text-violet-200', selected: 'bg-violet-500/60 border-violet-300 ring-2 ring-violet-400 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(139,92,246,0.5)]' },
+    { id: 'melancholic', label: 'Soft Melancholy', mood: 'Melancholic', waveform: 'sine' as OscillatorType, scale: 'minor', tempo: 0.8, baseFreq: 400, instrument: 'violin' as InstrumentType, unselected: 'bg-slate-500/25 border-slate-400 text-slate-200', selected: 'bg-slate-500/60 border-slate-300 ring-2 ring-slate-300 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(100,116,139,0.5)]' },
+    { id: 'serene', label: 'Serene Morning', mood: 'Serene', waveform: 'sine' as OscillatorType, scale: 'serene', tempo: 0.85, baseFreq: 440, instrument: 'piano' as InstrumentType, unselected: 'bg-amber-500/25 border-amber-400 text-amber-200', selected: 'bg-amber-500/60 border-amber-300 ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(245,158,11,0.5)]' },
+    { id: 'gentle', label: 'Gentle Rain', mood: 'Gentle', waveform: 'triangle' as OscillatorType, scale: 'gentle', tempo: 0.75, baseFreq: 380, instrument: 'marimba' as InstrumentType, unselected: 'bg-cyan-500/25 border-cyan-400 text-cyan-200', selected: 'bg-cyan-500/60 border-cyan-300 ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(34,211,238,0.5)]' },
+    { id: 'cozy', label: 'Cozy Evening', mood: 'Cozy', waveform: 'sine' as OscillatorType, scale: 'cozy', tempo: 0.9, baseFreq: 410, instrument: 'sine' as InstrumentType, unselected: 'bg-rose-500/25 border-rose-400 text-rose-200', selected: 'bg-rose-500/60 border-rose-300 ring-2 ring-rose-400 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(244,63,94,0.5)]' },
+    { id: 'peaceful', label: 'Peaceful Night', mood: 'Peaceful', waveform: 'triangle' as OscillatorType, scale: 'peaceful', tempo: 0.7, baseFreq: 360, instrument: 'piano' as InstrumentType, unselected: 'bg-indigo-500/25 border-indigo-400 text-indigo-200', selected: 'bg-indigo-500/60 border-indigo-300 ring-2 ring-indigo-400 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(99,102,241,0.5)]' },
+    { id: 'tranquil', label: 'Tranquil Forest', mood: 'Tranquil', waveform: 'sine' as OscillatorType, scale: 'tranquil', tempo: 0.82, baseFreq: 430, instrument: 'castanets' as InstrumentType, unselected: 'bg-emerald-500/25 border-emerald-400 text-emerald-200', selected: 'bg-emerald-500/60 border-emerald-300 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 text-white shadow-[0_0_16px_rgba(52,211,153,0.5)]' },
+  ] as const;
 
   // 미리 정의된 스케일 프리셋
   const scalePresets: Record<string, number[]> = {
@@ -96,6 +109,7 @@ const App: React.FC = () => {
       tempoMultiplier,
       baseFrequency,
       scale,
+      instrument: base.instrument ?? 'piano',
     };
   };
 
@@ -125,6 +139,7 @@ const App: React.FC = () => {
       baseFrequency,
       tempoMultiplier,
       scale,
+      instrument: selectedInstrument,
     };
   };
 
@@ -156,7 +171,7 @@ const App: React.FC = () => {
     } else {
       totalDurationRef.current = 0;
     }
-  }, [inputText, isAutoTheme, selectedMood, selectedWaveform, selectedBaseFreq, selectedTempo, selectedScale]);
+  }, [inputText, isAutoTheme, selectedMood, selectedWaveform, selectedBaseFreq, selectedTempo, selectedScale, selectedInstrument]);
 
   const handlePlay = async () => {
     if (isPlaying) {
@@ -255,101 +270,65 @@ const App: React.FC = () => {
         />
       </div>
 
-      {/* 프리셋 버튼만 (라벨 없음) */}
+      {/* 스타일 프리셋: 선택 시 링/배경으로 명확히 표시, 스타일별 색상 구분 */}
       <section className="text-xs font-mono text-slate-300">
         <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md">
+          <div className="flex flex-wrap gap-2 md:gap-2.5">
+            {stylePresets.map((preset) => {
+              const isSelected = selectedPresetId === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  className={`
+                    px-3 md:px-4 py-1.5 md:py-2 rounded-full border-2 font-semibold text-[10px] md:text-xs
+                    transition-all duration-200 hover:scale-105 active:scale-95
+                    ${isSelected ? preset.selected : preset.unselected}
+                  `}
+                  onClick={() => {
+                    setSelectedMood(preset.mood);
+                    setSelectedWaveform(preset.waveform);
+                    setSelectedScale(preset.scale);
+                    setSelectedTempo(preset.tempo);
+                    setSelectedBaseFreq(preset.baseFreq);
+                    setSelectedInstrument(preset.instrument);
+                    setIsAutoTheme(false);
+                    setSelectedPresetId(preset.id);
+                  }}
+                >
+                  {preset.label}
+                  {isSelected && <span className="ml-1.5">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 악기 선택 */}
+      <section className="text-xs font-mono text-slate-300">
+        <div className="bg-slate-900/70 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 backdrop-blur-md">
+          <p className="text-[10px] md:text-xs text-slate-400 mb-2 uppercase tracking-wide">Instrument</p>
           <div className="flex flex-wrap gap-1.5 md:gap-2">
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-sky-500/20 border border-sky-400/40 hover:bg-sky-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Dreamy');
-                setSelectedWaveform('triangle');
-                setSelectedScale('dreamy');
-                setSelectedTempo(0.9);
-                setSelectedBaseFreq(420);
-                setIsAutoTheme(false);
-              }}
-            >
-              Dreamy Night
-            </button>
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Melancholic');
-                setSelectedWaveform('sine');
-                setSelectedScale('minor');
-                setSelectedTempo(0.8);
-                setSelectedBaseFreq(400);
-                setIsAutoTheme(false);
-              }}
-            >
-              Soft Melancholy
-            </button>
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Serene');
-                setSelectedWaveform('sine');
-                setSelectedScale('serene');
-                setSelectedTempo(0.85);
-                setSelectedBaseFreq(440);
-                setIsAutoTheme(false);
-              }}
-            >
-              Serene Morning
-            </button>
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 hover:bg-cyan-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Gentle');
-                setSelectedWaveform('triangle');
-                setSelectedScale('gentle');
-                setSelectedTempo(0.75);
-                setSelectedBaseFreq(380);
-                setIsAutoTheme(false);
-              }}
-            >
-              Gentle Rain
-            </button>
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-rose-500/20 border border-rose-400/40 hover:bg-rose-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Cozy');
-                setSelectedWaveform('sine');
-                setSelectedScale('cozy');
-                setSelectedTempo(0.9);
-                setSelectedBaseFreq(410);
-                setIsAutoTheme(false);
-              }}
-            >
-              Cozy Evening
-            </button>
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Peaceful');
-                setSelectedWaveform('triangle');
-                setSelectedScale('peaceful');
-                setSelectedTempo(0.7);
-                setSelectedBaseFreq(360);
-                setIsAutoTheme(false);
-              }}
-            >
-              Peaceful Night
-            </button>
-            <button
-              className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-teal-500/20 border border-teal-400/40 hover:bg-teal-500/30 text-[9px] md:text-[11px]"
-              onClick={() => {
-                setSelectedMood('Tranquil');
-                setSelectedWaveform('sine');
-                setSelectedScale('tranquil');
-                setSelectedTempo(0.82);
-                setSelectedBaseFreq(430);
-                setIsAutoTheme(false);
-              }}
-            >
-              Tranquil Forest
-            </button>
+            {(['piano', 'marimba', 'violin', 'castanets', 'sine'] as InstrumentType[]).map((inst) => {
+              const isSelected = selectedInstrument === inst;
+              return (
+                <button
+                  key={inst}
+                  type="button"
+                  className={`
+                    px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border text-[10px] md:text-xs font-medium
+                    transition-all duration-200 hover:scale-105 active:scale-95
+                    ${isSelected
+                      ? 'bg-sky-500/50 border-sky-400 ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-900 text-white'
+                      : 'bg-white/5 border-white/20 text-slate-400 hover:bg-white/10 hover:text-slate-300'
+                    }
+                  `}
+                  onClick={() => setSelectedInstrument(inst)}
+                >
+                  {inst === 'sine' ? 'Sine' : inst.charAt(0).toUpperCase() + inst.slice(1)}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -410,7 +389,7 @@ const App: React.FC = () => {
           </header>
         </div>
 
-        <div className="relative w-full flex-none h-[40dvh] min-h-[280px] lg:fixed lg:inset-0 lg:h-full lg:min-h-0 z-10">
+        <div className="relative w-full flex-none h-[40dvh] min-h-[280px] lg:fixed lg:inset-0 lg:h-full lg:w-screen lg:min-w-0 lg:min-h-0 z-10">
           <Visualizer 
               isPlaying={isPlaying} 
               events={events} 
