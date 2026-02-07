@@ -18,8 +18,8 @@ export class AudioEngine {
   private isPlaying: boolean = false;
   private timerID: number | null = null;
   
-  // Timing constants (in seconds) — 전체 템포 아주 조금 빠르게
-  private readonly DOT_TIME = 0.14; 
+  // Timing constants (in seconds) — 전체 템포 조금 더 빠르게
+  private readonly DOT_TIME = 0.12; 
 
   constructor() {}
 
@@ -76,14 +76,14 @@ export class AudioEngine {
       gain.connect(this.padGain);
 
       const now = this.audioCtx.currentTime;
-      const attack = 0.5;
-      const release = 1.6;
-      const duration = 2.2;
+      const attack = 0.4;
+      const release = 1.2;
+      const duration = 1.7;
 
       osc.start(now);
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.2, now + attack);
-      gain.gain.setValueAtTime(0.16, now + duration - release);
+      gain.gain.linearRampToValueAtTime(0.12, now + attack);
+      gain.gain.setValueAtTime(0.1, now + duration - release);
       gain.gain.linearRampToValueAtTime(0, now + duration);
       osc.stop(now + duration + 0.1);
 
@@ -91,11 +91,10 @@ export class AudioEngine {
     };
 
     const now = this.audioCtx.currentTime;
-    this.padGain.gain.setValueAtTime(0, now);
-    this.padGain.gain.linearRampToValueAtTime(0.45, now + 1.5);
+    this.padGain.gain.setValueAtTime(0.28, now);
 
     playPadNote();
-    this.padArpeggioIntervalId = window.setInterval(playPadNote, 2200);
+    this.padArpeggioIntervalId = window.setInterval(playPadNote, 1000);
   }
 
   private stopDrone() {

@@ -126,7 +126,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
 
       const playheadX = width / 2;
       const trackY = height * 0.44;
-      const labelY = height * 0.44;
+      const labelY = height * 0.16;
       const labelRadius = Math.min(64, height * 0.16);
       const labelFontSize = Math.min(36, Math.max(20, height * 0.11));
 
@@ -196,7 +196,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
       // 4. Draw Particles
       updateAndDrawParticles(ctx, theme);
 
-      // 5. Draw current character label (트랙과 같은 높이)
+      // 5. Draw current character label (모스 트랙보다 위에)
       const activeIndex = lastActiveEventIndex.current;
       if (activeIndex >= 0 && activeIndex < events.length) {
         const active = events[activeIndex];
