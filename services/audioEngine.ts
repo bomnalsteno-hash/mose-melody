@@ -12,7 +12,6 @@ export class AudioEngine {
   private feedbackGain: GainNode | null = null;
 
   private padOscillators: OscillatorNode[] = [];
-  private padArpeggioIntervalId: number | null = null;
 
   private events: PlaybackEvent[] = [];
   private isPlaying: boolean = false;
@@ -51,8 +50,8 @@ export class AudioEngine {
     }
   }
 
-  // 반주: 스케일 기반 느린 아르페지오 — 노이즈가 아닌 작곡된 선율
-  private startDrone(theme: ThemeConfig) {
+  // 반주: 재생 전체 구간에 미리 스케줄 — setInterval 없이 계속 재생
+  private schedulePadArpeggio(theme: ThemeConfig, startTime: number, totalDuration: number) {
     if (!this.audioCtx || !this.padGain) return;
 
     this.stopDrone();
@@ -60,13 +59,18 @@ export class AudioEngine {
     const scale = theme.scale && theme.scale.length > 0 ? theme.scale : [0, 2, 4, 7, 9];
     const baseFreq = theme.baseFrequency * 0.5;
     const arpeggioSemitones = [scale[0], scale[1], scale[2], scale[0] + 12, scale[2], scale[1]];
-    let step = 0;
+    const attack = 0.4;
+    const release = 1.2;
+    const noteDuration = 1.7;
+    const intervalSec = 1.0;
 
-    const playPadNote = () => {
-      if (!this.audioCtx || !this.padGain) return;
-      const semitone = arpeggioSemitones[step % arpeggioSemitones.length];
+    this.padGain.gain.setValueAtTime(0.28, startTime);
+
+    for (let t = 0; t <= totalDuration + 2; t += intervalSec) {
+      const when = startTime + t;
+      const step = Math.floor(t / intervalSec) % arpeggioSemitones.length;
+      const semitone = arpeggioSemitones[step];
       const freq = baseFreq * Math.pow(2, semitone / 12);
-      step += 1;
 
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
@@ -75,33 +79,18 @@ export class AudioEngine {
       osc.connect(gain);
       gain.connect(this.padGain);
 
-      const now = this.audioCtx.currentTime;
-      const attack = 0.4;
-      const release = 1.2;
-      const duration = 1.7;
-
-      osc.start(now);
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + attack);
-      gain.gain.setValueAtTime(0.1, now + duration - release);
-      gain.gain.linearRampToValueAtTime(0, now + duration);
-      osc.stop(now + duration + 0.1);
+      osc.start(when);
+      gain.gain.setValueAtTime(0, when);
+      gain.gain.linearRampToValueAtTime(0.12, when + attack);
+      gain.gain.setValueAtTime(0.1, when + noteDuration - release);
+      gain.gain.linearRampToValueAtTime(0, when + noteDuration);
+      osc.stop(when + noteDuration + 0.1);
 
       this.padOscillators.push(osc);
-    };
-
-    const now = this.audioCtx.currentTime;
-    this.padGain.gain.setValueAtTime(0.28, now);
-
-    playPadNote();
-    this.padArpeggioIntervalId = window.setInterval(playPadNote, 1000);
+    }
   }
 
   private stopDrone() {
-    if (this.padArpeggioIntervalId !== null) {
-      clearInterval(this.padArpeggioIntervalId);
-      this.padArpeggioIntervalId = null;
-    }
     if (this.audioCtx && this.padGain) {
       const now = this.audioCtx.currentTime;
       this.padGain.gain.cancelScheduledValues(now);
@@ -360,8 +349,12 @@ export class AudioEngine {
     this.isPlaying = true;
     const startTime = this.audioCtx.currentTime + 0.1; // Scheduling delay
 
-    // Start Ambient Drone
-    this.startDrone(theme);
+    // Determine total duration first (needed for pad scheduling)
+    const lastEvent = this.events[this.events.length - 1];
+    const totalDuration = lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
+
+    // 반주: 재생 전체 구간에 미리 스케줄 (setInterval 없이 계속 재생)
+    this.schedulePadArpeggio(theme, startTime, totalDuration);
 
     const instrument: InstrumentType = theme.instrument ?? 'sine';
     this.events.forEach(event => {
@@ -370,10 +363,6 @@ export class AudioEngine {
       }
     });
 
-    // Determine total duration
-    const lastEvent = this.events[this.events.length - 1];
-    const totalDuration = lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
-    
     // Set timer for cleanup
     this.timerID = window.setTimeout(() => {
         this.stopDrone();

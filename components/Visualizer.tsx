@@ -126,7 +126,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
 
       const playheadX = width / 2;
       const trackY = height * 0.44;
-      const labelY = height * 0.16;
+      const labelY = height * 0.24;
       const labelRadius = Math.min(64, height * 0.16);
       const labelFontSize = Math.min(36, Math.max(20, height * 0.11));
 
