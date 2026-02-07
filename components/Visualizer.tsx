@@ -158,8 +158,13 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
         if (event.type === 'note') {
             const relativeTime = event.startTime - currentTime;
             const x = playheadX + (relativeTime * speed);
-            const noteWidth = Math.max(event.duration * speed - 2, 4);
-            
+            const isDash = event.symbol === MorseSymbol.DASH;
+            // 대시: 가로로 훨씬 길게 (옆으로 누인 느낌). 점은 기존 비율.
+            const baseWidth = event.duration * speed - 2;
+            const noteWidth = isDash
+              ? Math.max(baseWidth * 1.85, 12)
+              : Math.max(baseWidth, 4);
+
             // Optimization: Only draw if on screen
             const rect = canvas.getBoundingClientRect();
             if (x + noteWidth > -100 && x < rect.width + 100) {
@@ -175,14 +180,13 @@ const Visualizer: React.FC<VisualizerProps> = ({ isPlaying, events, theme, audio
                     ctx.shadowBlur = 5;
                 }
 
-                // 점: 동그란 점(원). 선(대시): 가로로 길쭉한 막대(낮은 높이). roundRect 미지원 브라우저 대응.
-                const isDash = event.symbol === MorseSymbol.DASH;
+                // 점: 동그란 점(원, 살짝 키움). 선(대시): 가로로 길쭉한 막대.
                 if (isDash) {
                   const barHeight = Math.max(12, height * 0.04);
                   const y = trackY - barHeight / 2;
                   ctx.fillRect(x, y, noteWidth, barHeight);
                 } else {
-                  const radius = Math.max(2, Math.min(noteWidth / 2, height * 0.028, 14));
+                  const radius = Math.max(3, Math.min(noteWidth / 2, height * 0.034, 17));
                   ctx.beginPath();
                   ctx.arc(x + noteWidth / 2, trackY, radius, 0, Math.PI * 2);
                   ctx.fill();

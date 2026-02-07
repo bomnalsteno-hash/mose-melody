@@ -41,21 +41,8 @@ export class AudioEngine {
       // 반주(패드)는 멜로디보다 한참 작게
       this.padGain.gain.value = 0.18;
 
-      // Delay Effect (Echo) — 모스가 잘 들리도록 에코 약하게
-      this.delayNode = this.audioCtx.createDelay();
-      this.delayNode.delayTime.value = 0.2; // 200ms
-      this.feedbackGain = this.audioCtx.createGain();
-      this.feedbackGain.gain.value = 0.12; // 12% feedback
-
-      // Routing: Melody -> Delay -> Feedback -> Delay
-      //          Melody -> Master
-      //          Delay -> Master
-      this.melodyGain.connect(this.delayNode);
-      this.delayNode.connect(this.feedbackGain);
-      this.feedbackGain.connect(this.delayNode);
-      
+      // 멜로디는 에코 없이 직통만 → 두 번 들리는 현상 제거, 모스가 정확히 들리도록
       this.melodyGain.connect(this.masterGain);
-      this.delayNode.connect(this.masterGain);
       
       // Pad Routing
       this.padGain.connect(this.masterGain);
